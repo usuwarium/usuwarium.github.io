@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* react-select */
+.select-box {
+  @apply text-sm md:text-base;
+
+  & .Select__control {
+    @apply bg-gray-700 border-gray-600 hover:border-gray-500 focus:border-gray-500 min-h-[34px];
+  }
+
+  & .Select__control--is-focused {
+    @apply border-gray-500 shadow-none;
+  }
+
+  & .Select__input-container {
+    color: #dad9d5;
+  }
+
+  & .Select__menu {
+    @apply bg-gray-700 text-sm;
+    z-index: 100;
+  }
+
+  & .Select__option {
+    @apply bg-gray-700 text-sm;
+    color: #dad9d5;
+    cursor: pointer;
+  }
+
+  & .Select__option--is-focused,
+  & .Select__option--is-selected {
+    @apply bg-gray-600;
+  }
+
+  & .Select__single-value {
+    color: #dad9d5;
+  }
+
+  & .Select__input {
+    color: #dad9d5;
+  }
+
+  & .Select__placeholder {
+    color: rgb(156 163 175);
+  }
+}

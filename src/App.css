@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@layer components {
+  .layout {
+    @apply grid h-screen;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto 60px;
+    grid-template-areas:
+      "header"
+      "main"
+      "footer"
+      "sidebar";
+  }
+
+  .side-menu {
+    grid-area: sidebar;
+    @apply bottom-0;
+  }
+
+  .main {
+    grid-area: main;
+    @apply flex flex-col h-full overflow-auto md:overflow-hidden;
+
+    scrollbar-gutter: stable;
+    @media (min-width: 768px) {
+      scrollbar-gutter: auto;
+    }
+  }
+
+  .header {
+    grid-area: header;
+    @apply px-2 pt-2 pb-2 md:px-8 md:pt-4 shrink-0;
+  }
+
+  .content {
+    @apply py-2 flex-1 md:overflow-auto;
+  }
+
+  .footer {
+    grid-area: footer;
+  }
+
+  @media (min-width: 768px) {
+    .layout {
+      grid-template-columns: 70px 1fr;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "sidebar header"
+        "sidebar main"
+        "sidebar footer";
+    }
+
+    .side-menu {
+      @apply py-3 bottom-auto h-auto;
+    }
+  }
+}
+
+@layer components {
+  .nav-list {
+    @apply list-outside list-none p-[0] flex flex-row md:flex-col md:items-center md:gap-3 h-full;
+  }
+
+  .nav-item {
+    @apply flex-1 p-[.5rem] hover:bg-[rgba(255,255,255,0.4)] flex flex-col items-center no-underline h-full;
+  }
+
+  .nav-item-selected {
+    @apply bg-[rgba(255,255,255,0.4)];
+  }
+
+  .nav-more {
+    @apply relative;
+  }
+
+  .more-button {
+    @apply flex! w-full h-full justify-center items-center;
+  }
+
+  .more-menu {
+    @apply absolute
+        bottom-full
+        right-0
+        rounded-lg
+        shadow-lg;
+
+    &.more-menu-open {
+      @apply flex;
+    }
+
+    &.more-menu-hidden {
+      @apply hidden;
+    }
+
+    &.more-menu-open .nav-item-selected {
+      @apply bg-[rgba(255,255,255,0.4)] rounded-lg;
+    }
+
+    .nav-list {
+      @apply flex-col gap-3;
+    }
+
+    .nav-item {
+      @apply w-[70px];
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nav-more {
+      @apply flex-1 text-center relative;
+    }
+
+    .more-button {
+      @apply hidden!;
+    }
+
+    .more-menu {
+      @apply flex! static bg-inherit shadow-none;
+    }
+  }
+}
