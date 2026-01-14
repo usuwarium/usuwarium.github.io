@@ -24,7 +24,6 @@ export class VideoProcessor {
     return (
       existing.title !== updated.title ||
       existing.published_at !== updated.published_at ||
-      existing.singing !== updated.singing ||
       JSON.stringify(existing.tags) !== JSON.stringify(updated.tags) ||
       existing.duration !== updated.duration ||
       existing.view_count !== updated.view_count ||
@@ -61,8 +60,11 @@ export class VideoProcessor {
     const publishedAt = snippet.publishedAt;
     const tags = snippet.tags || [];
 
-    // 動画を分類
-    const singing = VideoClassifier.isSinging(rawVideo);
+    // 既存の動画があればsingingとcompletedの値を引き継ぐ
+    const existingVideo = this.database.getVideo(videoId);
+
+    // 動画を分類（既存の動画がある場合は既存の値を使用）
+    const singing = existingVideo ? existingVideo.singing : VideoClassifier.isSinging(rawVideo);
 
     // 動画情報を作成
     const duration = VideoClassifier.parseISO8601Duration(rawVideo.contentDetails.duration);
@@ -71,9 +73,6 @@ export class VideoProcessor {
 
     // 視聴可能性を判定
     const available = VideoClassifier.isAvailable(rawVideo);
-
-    // 既存の動画があればcompletedの値を引き継ぐ
-    const existingVideo = this.database.getVideo(videoId);
 
     const video: Video = {
       video_id: videoId,
