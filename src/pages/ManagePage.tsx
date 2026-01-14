@@ -405,8 +405,8 @@ export function ManagePage() {
     }
   };
 
-  const seekToTime = (timestamp: string) => {
-    videoPlayerRef.current?.seekToTime(parseTimeString(timestamp) || 0);
+  const seekToTime = (timestamp: string, play?: boolean) => {
+    videoPlayerRef.current?.seekToTime(parseTimeString(timestamp) || 0, play);
   };
 
   const seekAndCheckEnd = (timestamp: string, offset: number) => {
@@ -605,7 +605,7 @@ export function ManagePage() {
                               />
                               <button
                                 onClick={() => {
-                                  seekToTime(part.startTime);
+                                  seekToTime(part.startTime, true);
                                   document.getElementById(`input-startTime-${part.id}`)?.focus();
                                 }}
                                 className="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs transition"
@@ -631,7 +631,7 @@ export function ManagePage() {
                                 <>
                                   <button
                                     onClick={() => {
-                                      seekToTime(part.endTime!);
+                                      seekToTime(part.endTime!, true);
                                       document.getElementById(`input-endTime-${part.id}`)?.focus();
                                     }}
                                     className="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs transition"

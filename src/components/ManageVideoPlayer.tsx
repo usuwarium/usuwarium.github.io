@@ -5,7 +5,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { FaPause, FaPlay, FaPlus } from "react-icons/fa";
 
 export interface ManageVideoPlayerRef {
-  seekToTime: (seconds: number) => void;
+  seekToTime: (seconds: number, play?: boolean) => void;
   seekAndCheckEnd: (endTime: number, offset: number) => void;
 }
 
@@ -41,7 +41,6 @@ export function ManageVideoPlayer({
     visible: true,
     onSongEnd: () => {
       // 終了位置チェック時の停止後にリセット
-      console.log("Song ended");
       resetEndTime(undefined);
     },
   });
@@ -62,10 +61,12 @@ export function ManageVideoPlayer({
     seekToTime(parseFloat(e.target.value));
   };
 
-  const seekToTime = (seconds: number) => {
+  const seekToTime = (seconds: number, play?: boolean) => {
     resetEndTime(undefined);
     seekTo(seconds);
-    playVideo();
+    if (play) {
+      playVideo();
+    }
   };
 
   const seekAndCheckEnd = (endTime: number, offset: number) => {
