@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { FaPlus, FaBookmark, FaRegBookmark } from "react-icons/fa";
-import { createPlaylist, addSongsToPlaylist, removeSongsFromPlaylist } from "@/lib/db";
+import {
+  createPlaylist,
+  addSongsToPlaylist,
+  removeSongsFromPlaylist,
+  type PlaylistId,
+} from "@/lib/db";
 import { usePlaylists } from "@/hooks/usePlaylists";
 import type { Song } from "@/lib/types";
 import toast from "react-hot-toast";
@@ -31,13 +36,13 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
     };
   }, [onClose]);
 
-  const isInPlaylist = (playlistId: number): boolean => {
+  const isInPlaylist = (playlistId: PlaylistId): boolean => {
     const songIdSet = playlistSongIdMap.get(playlistId);
     if (!songIdSet) return false;
     return songs.every((song) => songIdSet.has(song.song_id));
   };
 
-  const handleAddToPlaylist = async (playlistId: number) => {
+  const handleAddToPlaylist = async (playlistId: PlaylistId) => {
     try {
       if (isInPlaylist(playlistId)) {
         await removeSongsFromPlaylist(
@@ -97,11 +102,11 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
             {playlists.map((playlist) => (
               <button
                 key={playlist.id}
-                onClick={() => handleAddToPlaylist(playlist.id!)}
+                onClick={() => handleAddToPlaylist(playlist.id)}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-700 rounded transition grid grid-cols-[1fr_auto]"
               >
                 <span className="truncate">{playlist.name}</span>
-                {isInPlaylist(playlist.id!) ? (
+                {isInPlaylist(playlist.id) ? (
                   <FaBookmark size={14} className="mt-1" />
                 ) : (
                   <FaRegBookmark size={14} className="mt-1" />
@@ -114,7 +119,7 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
 
       <div className="border-t border-gray-700 p-2">
         {isCreating ? (
-          <div className="flex gap-2">
+          <div className="grid grid-cols-[1fr_auto] gap-2">
             <input
               type="text"
               value={newPlaylistName}
@@ -128,13 +133,10 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
                 }
               }}
               placeholder="プレイリスト名"
-              className="flex-1 px-2 py-1 text-sm bg-gray-700 rounded border border-gray-600 focus:border-blue-500 outline-none"
+              className="input-text w-full"
               autoFocus
             />
-            <button
-              onClick={handleCreateAndAdd}
-              className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-500 rounded transition"
-            >
+            <button onClick={handleCreateAndAdd} className="btn btn-primary whitespace-nowrap">
               作成
             </button>
           </div>

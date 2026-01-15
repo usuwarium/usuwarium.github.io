@@ -1,10 +1,16 @@
-import { type Playlist, type PlaylistId, getAllPlaylists, getPlaylistSongs } from "@/lib/db";
-import type { Song, SongId } from "@/lib/types";
+import {
+  type Playlist,
+  type PlaylistId,
+  type PlaylistSong,
+  getAllPlaylists,
+  getPlaylistSongs,
+} from "@/lib/db";
+import type { SongId } from "@/lib/types";
 import { useEffect, useState } from "react";
 
 export interface UsePlaylistsResult {
   playlists: Playlist[];
-  playlistSongMap: Map<PlaylistId, Song[]>;
+  playlistSongMap: Map<PlaylistId, PlaylistSong[]>;
   playlistSongIdMap: Map<PlaylistId, Set<SongId>>;
   reload: () => void;
   loading: boolean;
@@ -13,7 +19,9 @@ export interface UsePlaylistsResult {
 
 export function usePlaylists(): UsePlaylistsResult {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [playlistSongMap, setPlaylistSongMap] = useState<Map<PlaylistId, Song[]>>(new Map());
+  const [playlistSongMap, setPlaylistSongMap] = useState<Map<PlaylistId, PlaylistSong[]>>(
+    new Map()
+  );
   const [playlistSongIdMap, setPlaylistSongIdMap] = useState<Map<PlaylistId, Set<SongId>>>(
     new Map()
   );
@@ -35,7 +43,7 @@ export function usePlaylists(): UsePlaylistsResult {
         const allPlaylistSongs = await getPlaylistSongs();
 
         // 各プレイリストに含まれる曲を取得
-        const songMap = new Map<PlaylistId, Song[]>();
+        const songMap = new Map<PlaylistId, PlaylistSong[]>();
         const songIdsMap = new Map<PlaylistId, Set<SongId>>();
         for (const ps of allPlaylistSongs) {
           if (!songMap.has(ps.playlist_id)) {

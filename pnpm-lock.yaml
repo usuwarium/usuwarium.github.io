@@ -29,6 +29,9 @@ importers:
       react:
         specifier: ^19.2.0
         version: 19.2.3
+      react-call:
+        specifier: ^1.8.1
+        version: 1.8.1(react@19.2.3)
       react-dom:
         specifier: ^19.2.0
         version: 19.2.3(react@19.2.3)
@@ -1882,6 +1885,11 @@ packages:
 
   re2@1.23.0:
     resolution: {integrity: sha512-mT7+/Lz+Akjm/C/X6PiaHihcJL92TNNXai/C4c/dfBbhtwMm1uKEEoA2Lz/FF6aBFfQzg5mAyv4BGjM4q44QwQ==}
+
+  react-call@1.8.1:
+    resolution: {integrity: sha512-HztXMrthuK+XHeUcOJjBsT2U+oKpc2nKcUWii1aYBIs3vpgTFRQ7nm/RbjU8JCC41djRpT0GC0KgF8XYVgxOUQ==}
+    peerDependencies:
+      react: '>=18'
 
   react-dom@19.2.3:
     resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
@@ -3972,6 +3980,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
     optional: true
+
+  react-call@1.8.1(react@19.2.3):
+    dependencies:
+      react: 19.2.3
 
   react-dom@19.2.3(react@19.2.3):
     dependencies:
