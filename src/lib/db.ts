@@ -547,7 +547,11 @@ export async function exportPlaylists(): Promise<string> {
 }
 
 // プレイリストデータをインポート
-export async function importPlaylists(jsonData: string): Promise<void> {
+export async function importPlaylists(jsonData: string): Promise<string | null> {
+  const errors: string[] = [];
+  let skippedPlaylists = 0;
+  let skippedItems = 0;
+
   try {
     const data = JSON.parse(jsonData);
 
@@ -555,42 +559,121 @@ export async function importPlaylists(jsonData: string): Promise<void> {
       throw new Error("Invalid playlist data format");
     }
 
+    // インポートされたプレイリストIDを記録
+    const importedPlaylistIds = new Set<string>();
+
     for (const playlist of data.playlists) {
+      // プレイリストのバリデーション
+      if (!playlist.id || typeof playlist.id !== "string") {
+        skippedPlaylists++;
+        errors.push(`プレイリスト: IDが不正です`);
+        continue;
+      }
+      if (!playlist.name || typeof playlist.name !== "string") {
+        skippedPlaylists++;
+        errors.push(`プレイリスト「${playlist.id}」: 名前が不正です`);
+        continue;
+      }
+      if (!playlist.created_at || typeof playlist.created_at !== "string") {
+        skippedPlaylists++;
+        errors.push(`プレイリスト「${playlist.name}」: 作成日時が不正です`);
+        continue;
+      }
+      if (!playlist.updated_at || typeof playlist.updated_at !== "string") {
+        skippedPlaylists++;
+        errors.push(`プレイリスト「${playlist.name}」: 更新日時が不正です`);
+        continue;
+      }
+
       const playlistId = playlist.id;
 
-      // 同じidを持つプレイリストを検索
-      const existing = await db.playlists.get(playlistId);
+      try {
+        // 同じidを持つプレイリストを検索
+        const existing = await db.playlists.get(playlistId);
 
-      if (existing) {
-        // 既存のプレイリストを上書き
-        await db.playlists.update(playlistId, {
-          name: playlist.name,
-          created_at: playlist.created_at,
-          updated_at: playlist.updated_at,
-        });
-        // 既存のプレイリストアイテムを削除
-        await db.playlistItems.where("playlist_id").equals(playlistId).delete();
-      } else {
-        // 新規プレイリストを追加
-        await db.playlists.add({
-          id: playlistId,
-          name: playlist.name,
-          created_at: playlist.created_at,
-          updated_at: playlist.updated_at,
-        });
+        if (existing) {
+          // 既存のプレイリストを上書き
+          await db.playlists.update(playlistId, {
+            name: playlist.name,
+            created_at: playlist.created_at,
+            updated_at: playlist.updated_at,
+          });
+          // 既存のプレイリストアイテムを削除
+          await db.playlistItems.where("playlist_id").equals(playlistId).delete();
+        } else {
+          // 新規プレイリストを追加
+          await db.playlists.add({
+            id: playlistId,
+            name: playlist.name,
+            created_at: playlist.created_at,
+            updated_at: playlist.updated_at,
+          });
+        }
+        importedPlaylistIds.add(playlistId);
+      } catch (err) {
+        skippedPlaylists++;
+        errors.push(`プレイリスト「${playlist.name}」: インポート失敗`);
+        console.error(`Failed to import playlist:`, playlist, err);
       }
     }
 
     // プレイリストアイテムを追加
     for (const playlistItem of data.playlistItems) {
-      const playlistId = playlistItem.playlist_id;
-      // 既に存在している場合は上書き
-      await db.playlistItems.put({
-        playlist_id: playlistId,
-        song_id: playlistItem.song_id,
-        order: playlistItem.order,
-      });
+      // プレイリストアイテムのバリデーション
+      if (!playlistItem.playlist_id || typeof playlistItem.playlist_id !== "string") {
+        skippedItems++;
+        errors.push(`曲: プレイリストIDが不正です`);
+        continue;
+      }
+      if (!playlistItem.song_id || typeof playlistItem.song_id !== "string") {
+        skippedItems++;
+        errors.push(`曲: 曲IDが不正です`);
+        continue;
+      }
+      if (typeof playlistItem.order !== "number" || !Number.isFinite(playlistItem.order)) {
+        skippedItems++;
+        errors.push(`曲「${playlistItem.song_id}」: 順序が不正です`);
+        continue;
+      }
+
+      // インポートされたプレイリストにのみ曲を追加
+      if (!importedPlaylistIds.has(playlistItem.playlist_id)) {
+        skippedItems++;
+        continue;
+      }
+
+      try {
+        // 既に存在している場合は上書き
+        await db.playlistItems.put({
+          playlist_id: playlistItem.playlist_id,
+          song_id: playlistItem.song_id,
+          order: playlistItem.order,
+        });
+      } catch (err) {
+        skippedItems++;
+        errors.push(`曲「${playlistItem.song_id}」: インポート失敗`);
+        console.error(`Failed to import playlist item:`, playlistItem, err);
+      }
     }
+
+    // エラーメッセージを生成
+    if (errors.length > 0) {
+      // 詳細はコンソールに出力
+      console.error("インポート時に以下の問題が発生しました:");
+      errors.forEach((error) => console.error(`  - ${error}`));
+
+      // ユーザーには簡潔なメッセージを返す
+      const messages: string[] = [];
+      if (skippedPlaylists > 0) {
+        messages.push(`${skippedPlaylists}個のプレイリストを読み込めませんでした`);
+      }
+      if (skippedItems > 0) {
+        messages.push(`${skippedItems}曲を読み込めませんでした`);
+      }
+      return messages.join("。") + "。";
+    }
+
+    return null;
   } catch (error) {
     console.error("Failed to import playlists:", error);
     throw error;

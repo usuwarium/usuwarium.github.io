@@ -119,7 +119,7 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
 
       <div className="border-t border-gray-700 p-2">
         {isCreating ? (
-          <div className="grid grid-cols-[auto_1fr] gap-2">
+          <div className="grid grid-cols-[1fr_auto] gap-2">
             <input
               type="text"
               value={newPlaylistName}

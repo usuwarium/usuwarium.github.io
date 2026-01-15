@@ -109,6 +109,7 @@ export function PlaylistPage() {
       a.download = `playlists_${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      setIsOptionMenuOpen(false);
     } catch (error) {
       toast.error("エクスポートに失敗しました");
       console.error(error);
@@ -125,8 +126,12 @@ export function PlaylistPage() {
 
       const text = await file.text();
       try {
-        await importPlaylists(text);
-        toast.success("プレイリストをインポートしました");
+        const errorMessage = await importPlaylists(text);
+        if (errorMessage) {
+          toast.error(errorMessage, { duration: 8000 });
+        } else {
+          toast.success("プレイリストをインポートしました");
+        }
         reload();
       } catch (error) {
         toast.error("インポートに失敗しました");
@@ -134,6 +139,7 @@ export function PlaylistPage() {
       }
     };
     input.click();
+    setIsOptionMenuOpen(false);
   };
 
   useEffect(() => {
