@@ -2,17 +2,21 @@ import { YouTubePlayer, type YouTubePlayerRef } from "@/components/YouTubePlayer
 import { usePlaylists } from "@/hooks/usePlaylists";
 import type { PlaylistId } from "@/lib/db";
 import {
+  addSongToPlaylistAtPosition,
   createPlaylist,
   deletePlaylist,
   exportPlaylists,
   importPlaylists,
   removeSongsFromPlaylist,
   reorderPlaylistItems,
+  restorePlaylist,
   updatePlaylist,
 } from "@/lib/db";
 import { timestampSpan } from "@/lib/humanize";
 import type { SongId } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
+import { createCallable } from "react-call";
+import type { ReactCall } from "react-call";
 import toast from "react-hot-toast";
 import { BsThreeDots } from "react-icons/bs";
 import {
@@ -25,10 +29,31 @@ import {
   FaRandom,
   FaTimesCircle,
   FaTrash,
+  FaUndo,
   FaUpload,
   FaArrowLeft,
 } from "react-icons/fa";
 import { IoMdMusicalNote } from "react-icons/io";
+
+interface ConfirmDialogProps {
+  message: string;
+}
+
+const ConfirmDialog = createCallable<ConfirmDialogProps, boolean>(({ message, call }) => (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+    <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+      <p className="text-white mb-6">{message}</p>
+      <div className="flex gap-3 justify-end">
+        <button onClick={() => call.end(false)} className="btn">
+          キャンセル
+        </button>
+        <button onClick={() => call.end(true)} className="btn bg-red-600 hover:bg-red-700">
+          削除
+        </button>
+      </div>
+    </div>
+  </div>
+));
 
 export function PlaylistPage() {
   const youtubePlayerRef = useRef<YouTubePlayerRef>(null);
@@ -63,12 +88,48 @@ export function PlaylistPage() {
   };
 
   const handleDeletePlaylist = async (id: PlaylistId) => {
-    if (!confirm("このプレイリストを削除しますか？")) return;
+    const confirmed = await ConfirmDialog.call({
+      message: "このプレイリストを削除しますか？",
+    });
+    if (!confirmed) return;
+
+    const playlist = playlists.find((p) => p.id === id);
+    const songs = playlistSongMap.get(id) || [];
+    const items = songs.map((s) => ({ song_id: s.song_id, order: s.order }));
+
     await deletePlaylist(id);
     if (selectedPlaylistId === id) {
       setSelectedPlaylistId(undefined);
     }
     reload();
+
+    if (playlist) {
+      toast.success(
+        (t) => (
+          <div className="flex items-center gap-3">
+            <span>プレイリストを削除しました</span>
+            <button
+              onClick={async () => {
+                await restorePlaylist(
+                  playlist.id,
+                  playlist.name,
+                  items,
+                  playlist.created_at,
+                  playlist.updated_at
+                );
+                reload();
+                toast.dismiss(t.id);
+                toast.success("元に戻しました");
+              }}
+              className="btn btn-primary text-sm"
+            >
+              <FaUndo className="text-white" />
+            </button>
+          </div>
+        ),
+        { duration: 5000 }
+      );
+    }
   };
 
   const handleSelectPlaylist = (id: PlaylistId) => {
@@ -77,11 +138,36 @@ export function PlaylistPage() {
   };
 
   const handleRemoveSong = async (id: PlaylistId, songId: SongId) => {
+    const song = playlistSongs.find((s) => s.song_id === songId);
+    if (!song) return;
+
+    const originalOrder = song.order;
+
     await removeSongsFromPlaylist(id, [songId]);
     if (songId === playingSongId) {
       youtubePlayerRef.current?.close();
     }
     reload();
+
+    toast.success(
+      (t) => (
+        <div className="flex items-center gap-3">
+          <span>プレイリストから削除しました</span>
+          <button
+            onClick={async () => {
+              await addSongToPlaylistAtPosition(id, songId, originalOrder);
+              reload();
+              toast.dismiss(t.id);
+              toast.success("元に戻しました");
+            }}
+            className="btn btn-primary text-sm"
+          >
+            <FaUndo className="text-white" />
+          </button>
+        </div>
+      ),
+      { duration: 5000 }
+    );
   };
 
   const handleMove = async (index: number, direction: string) => {
@@ -404,6 +490,7 @@ export function PlaylistPage() {
           onSongChanged={(song) => setPlayingSongId(song?.song_id)}
         />
       </footer>
+      <ConfirmDialog.Root />
     </>
   );
 }

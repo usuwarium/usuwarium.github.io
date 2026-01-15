@@ -17,6 +17,7 @@
     "nanoid": "^5.1.6",
     "papaparse": "^5.5.3",
     "react": "^19.2.0",
+    "react-call": "^1.8.1",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-hotkeys-hook": "^5.2.1",

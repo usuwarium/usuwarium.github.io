@@ -438,6 +438,29 @@ export async function createPlaylist(name: string): Promise<PlaylistId> {
   return id;
 }
 
+// プレイリストを指定されたIDとアイテムで復元
+export async function restorePlaylist(
+  id: PlaylistId,
+  name: string,
+  items: Array<{ song_id: SongId; order: number }>,
+  created_at: string,
+  updated_at: string
+): Promise<void> {
+  await db.playlists.add({
+    id,
+    name,
+    created_at,
+    updated_at,
+  });
+  await db.playlistItems.bulkAdd(
+    items.map((item) => ({
+      playlist_id: id,
+      song_id: item.song_id,
+      order: item.order,
+    }))
+  );
+}
+
 // プレイリストを更新
 export async function updatePlaylist(playlistId: PlaylistId, name: string): Promise<void> {
   await db.playlists.update(playlistId, {
@@ -464,6 +487,32 @@ export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId
       order: ++maxOrder,
     });
   }
+
+  await db.playlists.update(playlistId, {
+    updated_at: new Date().toISOString(),
+  });
+}
+
+// プレイリストに曲を特定の位置に追加
+export async function addSongToPlaylistAtPosition(
+  playlistId: PlaylistId,
+  songId: SongId,
+  position: number
+): Promise<void> {
+  const songs = await db.playlistItems.where("playlist_id").equals(playlistId).sortBy("order");
+
+  // 指定された位置以降の曲の順序を+1する
+  const updatesPromise = songs
+    .filter((s) => s.order >= position)
+    .map((s) => db.playlistItems.update([s.playlist_id, s.song_id], { order: s.order + 1 }));
+  await Promise.all(updatesPromise);
+
+  // 指定された位置に曲を追加
+  await db.playlistItems.add({
+    playlist_id: playlistId,
+    song_id: songId,
+    order: position,
+  });
 
   await db.playlists.update(playlistId, {
     updated_at: new Date().toISOString(),
