@@ -561,9 +561,11 @@ export async function importPlaylists(jsonData: string): Promise<string | null> 
 
     // インポートされたプレイリストIDを記録
     const importedPlaylistIds = new Set<string>();
+    const validPlaylists: Playlist[] = [];
+    const playlistsToUpdate: { id: string; updates: Partial<Playlist> }[] = [];
 
+    // プレイリストのバリデーション
     for (const playlist of data.playlists) {
-      // プレイリストのバリデーション
       if (!playlist.id || typeof playlist.id !== "string") {
         skippedPlaylists++;
         errors.push(`プレイリスト: IDが不正です`);
@@ -587,39 +589,34 @@ export async function importPlaylists(jsonData: string): Promise<string | null> 
 
       const playlistId = playlist.id;
 
-      try {
-        // 同じidを持つプレイリストを検索
-        const existing = await db.playlists.get(playlistId);
+      // 同じidを持つプレイリストを検索
+      const existing = await db.playlists.get(playlistId);
 
-        if (existing) {
-          // 既存のプレイリストを上書き
-          await db.playlists.update(playlistId, {
+      if (existing) {
+        // 既存のプレイリストを上書き
+        playlistsToUpdate.push({
+          id: playlistId,
+          updates: {
             name: playlist.name,
             created_at: playlist.created_at,
             updated_at: playlist.updated_at,
-          });
-          // 既存のプレイリストアイテムを削除
-          await db.playlistItems.where("playlist_id").equals(playlistId).delete();
-        } else {
-          // 新規プレイリストを追加
-          await db.playlists.add({
-            id: playlistId,
-            name: playlist.name,
-            created_at: playlist.created_at,
-            updated_at: playlist.updated_at,
-          });
-        }
-        importedPlaylistIds.add(playlistId);
-      } catch (err) {
-        skippedPlaylists++;
-        errors.push(`プレイリスト「${playlist.name}」: インポート失敗`);
-        console.error(`Failed to import playlist:`, playlist, err);
+          },
+        });
+      } else {
+        // 新規プレイリストを追加
+        validPlaylists.push({
+          id: playlistId,
+          name: playlist.name,
+          created_at: playlist.created_at,
+          updated_at: playlist.updated_at,
+        });
       }
+      importedPlaylistIds.add(playlistId);
     }
 
-    // プレイリストアイテムを追加
+    // プレイリストアイテムのバリデーション
+    const validPlaylistItems: PlaylistItem[] = [];
     for (const playlistItem of data.playlistItems) {
-      // プレイリストアイテムのバリデーション
       if (!playlistItem.playlist_id || typeof playlistItem.playlist_id !== "string") {
         skippedItems++;
         errors.push(`曲: プレイリストIDが不正です`);
@@ -642,18 +639,37 @@ export async function importPlaylists(jsonData: string): Promise<string | null> 
         continue;
       }
 
-      try {
-        // 既に存在している場合は上書き
-        await db.playlistItems.put({
-          playlist_id: playlistItem.playlist_id,
-          song_id: playlistItem.song_id,
-          order: playlistItem.order,
-        });
-      } catch (err) {
-        skippedItems++;
-        errors.push(`曲「${playlistItem.song_id}」: インポート失敗`);
-        console.error(`Failed to import playlist item:`, playlistItem, err);
+      validPlaylistItems.push({
+        playlist_id: playlistItem.playlist_id,
+        song_id: playlistItem.song_id,
+        order: playlistItem.order,
+      });
+    }
+
+    // データベースに一括登録
+    try {
+      // 既存のプレイリストアイテムを削除（更新対象のプレイリストのみ）
+      for (const { id } of playlistsToUpdate) {
+        await db.playlistItems.where("playlist_id").equals(id).delete();
       }
+
+      // プレイリストを更新
+      for (const { id, updates } of playlistsToUpdate) {
+        await db.playlists.update(id, updates);
+      }
+
+      // 新規プレイリストを追加
+      if (validPlaylists.length > 0) {
+        await db.playlists.bulkAdd(validPlaylists);
+      }
+
+      // プレイリストアイテムを追加
+      if (validPlaylistItems.length > 0) {
+        await db.playlistItems.bulkPut(validPlaylistItems);
+      }
+    } catch (err) {
+      console.error("Failed to import playlists:", err);
+      throw new Error("データベースへの登録に失敗しました");
     }
 
     // エラーメッセージを生成
