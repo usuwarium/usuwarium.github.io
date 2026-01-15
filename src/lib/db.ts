@@ -558,11 +558,6 @@ export async function importPlaylists(jsonData: string): Promise<void> {
     for (const playlist of data.playlists) {
       const playlistId = playlist.id;
 
-      if (!playlistId) {
-        console.warn("Skipping playlist without id:", playlist);
-        continue;
-      }
-
       // 同じidを持つプレイリストを検索
       const existing = await db.playlists.get(playlistId);
 
@@ -589,12 +584,7 @@ export async function importPlaylists(jsonData: string): Promise<void> {
     // プレイリストアイテムを追加
     for (const playlistItem of data.playlistItems) {
       const playlistId = playlistItem.playlist_id;
-
-      if (!playlistId) {
-        console.warn("Skipping playlist item without playlist_id:", playlistItem);
-        continue;
-      }
-
+      // 既に存在している場合は上書き
       await db.playlistItems.put({
         playlist_id: playlistId,
         song_id: playlistItem.song_id,
