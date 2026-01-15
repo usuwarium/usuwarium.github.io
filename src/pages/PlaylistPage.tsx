@@ -33,7 +33,7 @@ import { IoMdMusicalNote } from "react-icons/io";
 export function PlaylistPage() {
   const youtubePlayerRef = useRef<YouTubePlayerRef>(null);
   const [playingSongId, setPlayingSongId] = useState<SongId | undefined>(undefined);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | undefined>(undefined);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<PlaylistId | undefined>(undefined);
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState("");
@@ -62,7 +62,7 @@ export function PlaylistPage() {
     reload();
   };
 
-  const handleDeletePlaylist = async (id: number) => {
+  const handleDeletePlaylist = async (id: PlaylistId) => {
     if (!confirm("このプレイリストを削除しますか？")) return;
     await deletePlaylist(id);
     if (selectedPlaylistId === id) {
@@ -239,14 +239,14 @@ export function PlaylistPage() {
                         ? "bg-gray-600"
                         : "bg-gray-800 hover:bg-gray-700"
                     }`}
-                    onClick={() => handleSelectPlaylist(playlist.id!)}
+                    onClick={() => handleSelectPlaylist(playlist.id)}
                   >
                     <div className="flex items-center justify-between">
                       <span className="truncate mr-1">{playlist.name}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeletePlaylist(playlist.id!);
+                          handleDeletePlaylist(playlist.id);
                         }}
                         className="text-red-400 hover:text-red-300 transition"
                       >

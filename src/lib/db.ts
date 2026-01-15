@@ -1,20 +1,21 @@
 import Dexie, { type Table } from "dexie";
+import { nanoid } from "nanoid";
 import Papa from "papaparse";
 import { config } from "../../config";
 import { matchesQuickFilter } from "./filter";
-import type { Song, SongId, Video, VideoId } from "./types";
+import { type Song, type SongId, type Video, type VideoId } from "./types";
 
-export type PlaylistId = number;
+export type PlaylistId = string;
 
 export interface Playlist {
-  id?: PlaylistId;
+  id: PlaylistId;
   name: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface PlaylistItem {
-  playlist_id: number;
+  playlist_id: PlaylistId;
   song_id: SongId;
   order: number;
 }
@@ -40,7 +41,7 @@ class UsuwariumDB extends Dexie {
       videos: "&video_id, published_at, like_count, view_count",
       songs: "&song_id, video_id, video_published_at, artist, title, start_time",
       metadata: "key",
-      playlists: "++id, name, created_at, updated_at",
+      playlists: "&id, name, created_at, updated_at",
       playlistItems: "[playlist_id+song_id], order",
     });
   }
@@ -425,31 +426,34 @@ export async function getAllPlaylists(): Promise<Playlist[]> {
 }
 
 // プレイリストを作成
-export async function createPlaylist(name: string): Promise<number> {
+export async function createPlaylist(name: string): Promise<PlaylistId> {
   const now = new Date().toISOString();
-  return await db.playlists.add({
+  const id = nanoid();
+  await db.playlists.add({
+    id,
     name,
     created_at: now,
     updated_at: now,
   });
+  return id;
 }
 
 // プレイリストを更新
-export async function updatePlaylist(id: number, name: string): Promise<void> {
-  await db.playlists.update(id, {
+export async function updatePlaylist(playlistId: PlaylistId, name: string): Promise<void> {
+  await db.playlists.update(playlistId, {
     name,
     updated_at: new Date().toISOString(),
   });
 }
 
 // プレイリストを削除
-export async function deletePlaylist(id: number): Promise<void> {
-  await db.playlists.delete(id);
-  await db.playlistItems.where("playlist_id").equals(id).delete();
+export async function deletePlaylist(playlistId: PlaylistId): Promise<void> {
+  await db.playlists.delete(playlistId);
+  await db.playlistItems.where("playlist_id").equals(playlistId).delete();
 }
 
 // プレイリストに複数の曲を追加
-export async function addSongsToPlaylist(playlistId: number, songIds: SongId[]): Promise<void> {
+export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId[]): Promise<void> {
   const songs = await db.playlistItems.where("playlist_id").equals(playlistId).toArray();
   let maxOrder = songs.length > 0 ? Math.max(...songs.map((s) => s.order)) : 0;
 
@@ -468,7 +472,7 @@ export async function addSongsToPlaylist(playlistId: number, songIds: SongId[]):
 
 // プレイリストから曲を削除
 export async function removeSongsFromPlaylist(
-  playlistId: number,
+  playlistId: PlaylistId,
   songIds: SongId[]
 ): Promise<void> {
   for (const songId of songIds) {
@@ -483,7 +487,10 @@ export async function removeSongsFromPlaylist(
 }
 
 // プレイリスト内の曲の順序を変更
-export async function reorderPlaylistItems(playlistId: number, songIds: SongId[]): Promise<void> {
+export async function reorderPlaylistItems(
+  playlistId: PlaylistId,
+  songIds: SongId[]
+): Promise<void> {
   const playlistItems = await db.playlistItems.where("playlist_id").equals(playlistId).toArray();
 
   for (let i = 0; i < songIds.length; i++) {
@@ -548,27 +555,51 @@ export async function importPlaylists(jsonData: string): Promise<void> {
       throw new Error("Invalid playlist data format");
     }
 
-    // 既存のプレイリストIDとの重複を避けるため、IDマッピングを作成
-    const idMapping: { [oldId: number]: number } = {};
-
     for (const playlist of data.playlists) {
-      const newId = await db.playlists.add({
-        name: playlist.name,
-        created_at: playlist.created_at,
-        updated_at: playlist.updated_at,
-      });
-      idMapping[playlist.id] = newId;
-    }
+      const playlistId = playlist.id;
 
-    for (const playlistItem of data.playlistItems) {
-      const newPlaylistId = idMapping[playlistItem.playlist_id];
-      if (newPlaylistId) {
-        await db.playlistItems.add({
-          playlist_id: newPlaylistId,
-          song_id: playlistItem.song_id,
-          order: playlistItem.order,
+      if (!playlistId) {
+        console.warn("Skipping playlist without id:", playlist);
+        continue;
+      }
+
+      // 同じidを持つプレイリストを検索
+      const existing = await db.playlists.get(playlistId);
+
+      if (existing) {
+        // 既存のプレイリストを上書き
+        await db.playlists.update(playlistId, {
+          name: playlist.name,
+          created_at: playlist.created_at,
+          updated_at: playlist.updated_at,
+        });
+        // 既存のプレイリストアイテムを削除
+        await db.playlistItems.where("playlist_id").equals(playlistId).delete();
+      } else {
+        // 新規プレイリストを追加
+        await db.playlists.add({
+          id: playlistId,
+          name: playlist.name,
+          created_at: playlist.created_at,
+          updated_at: playlist.updated_at,
         });
       }
+    }
+
+    // プレイリストアイテムを追加
+    for (const playlistItem of data.playlistItems) {
+      const playlistId = playlistItem.playlist_id;
+
+      if (!playlistId) {
+        console.warn("Skipping playlist item without playlist_id:", playlistItem);
+        continue;
+      }
+
+      await db.playlistItems.put({
+        playlist_id: playlistId,
+        song_id: playlistItem.song_id,
+        order: playlistItem.order,
+      });
     }
   } catch (error) {
     console.error("Failed to import playlists:", error);
