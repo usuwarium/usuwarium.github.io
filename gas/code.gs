@@ -143,12 +143,13 @@ function addVideo(spreadsheet, video) {
       channel_id: video.channel_id || "",
       title: video.title || "",
       published_at: video.published_at || "",
-      singing: video.singing || false,
       tags: JSON.stringify(video.tags) || "",
       view_count: video.view_count || 0,
       like_count: video.like_count || 0,
       duration: video.duration || 0,
       processed_at: video.processed_at || "",
+      singing: video.singing || false,
+      available: video.available || false,
       completed: video.completed || false,
     };
 
