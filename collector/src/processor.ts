@@ -7,6 +7,7 @@ import type { YouTubeVideo } from "../../src/lib/youtube-types";
 import { YouTubeAPI } from "./youtube.ts";
 import { VideoClassifier } from "../../src/lib/classifier.ts";
 import { Database } from "./database.ts";
+import { CHANNEL_ID } from "./index.ts";
 
 export class VideoProcessor {
   private youtube: YouTubeAPI;
@@ -177,6 +178,78 @@ export class VideoProcessor {
 
     console.log(
       `\n処理完了: 新規${newCount}件, 更新${updatedCount}件, 利用不可${unavailableCount}件`
+    );
+  }
+
+  /**
+   * 他のチャンネルの動画を更新
+   */
+  async updateOtherChannelVideos(): Promise<void> {
+    console.log("\n他のチャンネルの動画を更新中...");
+
+    const allVideos = this.database.getAllVideos();
+    // 稀羽すうチャンネル以外の動画を抽出
+    const otherChannelVideos = allVideos.filter((video) => video.channel_id !== CHANNEL_ID);
+
+    if (otherChannelVideos.length === 0) {
+      console.log("✓ 他のチャンネルの動画はありません");
+      return;
+    }
+
+    console.log(`✓ ${otherChannelVideos.length}件の他チャンネル動画を検出`);
+
+    // videoIdのリストを作成
+    const videoIds = otherChannelVideos.map((v) => v.video_id);
+
+    // YouTube APIで一括取得
+    console.log("YouTube APIから動画情報を取得中...");
+    const rawVideos = await this.youtube.getVideosByIds(videoIds);
+    console.log(`✓ ${rawVideos.length}件の動画情報を取得`);
+
+    // 取得できた動画のマップを作成
+    const rawVideoMap = new Map<string, YouTubeVideo>();
+    for (const rawVideo of rawVideos) {
+      rawVideoMap.set(rawVideo.id, rawVideo);
+    }
+
+    // 更新が必要な動画を処理
+    const videosToUpdate: Video[] = [];
+    let updatedCount = 0;
+    let unavailableCount = 0;
+
+    for (const existingVideo of otherChannelVideos) {
+      const rawVideo = rawVideoMap.get(existingVideo.video_id);
+
+      if (!rawVideo) {
+        // 取得できなかった動画 → 削除・非公開
+        if (existingVideo.available) {
+          console.log(
+            `  → ${existingVideo.title} (${existingVideo.video_id}) を available=false に更新`
+          );
+          const updatedVideo = { ...existingVideo, available: false };
+          videosToUpdate.push(updatedVideo);
+          unavailableCount++;
+        }
+      } else {
+        // 動画情報を処理
+        const video = await this.processVideo(rawVideo);
+        if (this.hasVideoChanged(existingVideo, video)) {
+          console.log(`  → ${video.title} (${video.video_id}) を更新`);
+          videosToUpdate.push(video);
+          updatedCount++;
+        }
+      }
+    }
+
+    // スプレッドシートに保存
+    if (videosToUpdate.length > 0) {
+      console.log(`\nスプレッドシートに${videosToUpdate.length}件の動画を保存中...`);
+      await this.database.batchSaveVideos(videosToUpdate);
+      console.log("✓ 動画の保存完了");
+    }
+
+    console.log(
+      `\n他チャンネル動画の処理完了: 更新${updatedCount}件, 利用不可${unavailableCount}件`
     );
   }
 }

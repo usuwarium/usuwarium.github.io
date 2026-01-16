@@ -4,11 +4,7 @@
 
 import { nanoid } from "nanoid";
 import type { Song } from "./types";
-import type {
-  YouTubeVideo,
-  YouTubeComment,
-  TimestampInfo,
-} from "./youtube-types";
+import type { YouTubeVideo, YouTubeComment, TimestampInfo } from "./youtube-types";
 
 export class VideoClassifier {
   /**
@@ -36,8 +32,7 @@ export class VideoClassifier {
    */
   static isAvailable(rawVideo: YouTubeVideo): boolean {
     const isUpcoming = rawVideo.snippet.liveBroadcastContent === "upcoming";
-    const blockedRegions =
-      rawVideo.contentDetails.regionRestriction?.blocked || [];
+    const blockedRegions = rawVideo.contentDetails.regionRestriction?.blocked || [];
     const isBlocked = blockedRegions.includes("JP");
     return !isUpcoming && !isBlocked;
   }
@@ -58,18 +53,14 @@ export class VideoClassifier {
       for (const line of lines) {
         // MM:SS または H:MM:SS の後に曲名がある形式を検索
         // 例: "0:00 曲名 / アーティスト"
-        const pattern =
-          /(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(.+?)(?:\s*[/／]\s*(.+))?$/;
+        const pattern = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(.+?)(?:\s*[/／]\s*(.+))?$/;
         const match = line.match(pattern);
 
         if (match) {
           let seconds = 0;
           if (match[3]) {
             // H:MM:SS
-            seconds =
-              parseInt(match[1]) * 3600 +
-              parseInt(match[2]) * 60 +
-              parseInt(match[3]);
+            seconds = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3]);
           } else {
             // MM:SS
             seconds = parseInt(match[1]) * 60 + parseInt(match[2]);
@@ -106,8 +97,7 @@ export class VideoClassifier {
    * 例：PT1H30M45S → 5445
    */
   static parseISO8601Duration(duration: string): number {
-    const pattern =
-      /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+    const pattern = /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
     const matches = duration.match(pattern);
 
     if (!matches) {
@@ -122,12 +112,7 @@ export class VideoClassifier {
     const seconds = parseInt(matches[6] || "0");
 
     return (
-      seconds +
-      minutes * 60 +
-      hours * 3600 +
-      days * 86400 +
-      months * 2592000 +
-      years * 31536000
+      seconds + minutes * 60 + hours * 3600 + days * 86400 + months * 2592000 + years * 31536000
     );
   }
 

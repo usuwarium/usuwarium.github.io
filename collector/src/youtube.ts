@@ -131,4 +131,25 @@ export class YouTubeAPI {
     }
     return video;
   }
+
+  /**
+   * 複数の動画情報を一括取得
+   */
+  async getVideosByIds(videoIds: string[]): Promise<YouTubeVideo[]> {
+    const videos: YouTubeVideo[] = [];
+
+    // 50件ずつ取得（YouTube API の制限）
+    for (let i = 0; i < videoIds.length; i += 50) {
+      const batch = videoIds.slice(i, i + 50);
+      const response = await this.youtube.videos.list({
+        part: ["snippet", "contentDetails", "statistics"],
+        id: batch,
+      });
+
+      const batchVideos = (response.data.items as YouTubeVideo[]) || [];
+      videos.push(...batchVideos);
+    }
+
+    return videos;
+  }
 }
