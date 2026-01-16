@@ -13,6 +13,7 @@ import { SheetsClient } from "./sheets-client.ts";
 dotenv.config();
 
 const CHANNEL_NAME = "@Suu_Usuwa";
+export const CHANNEL_ID = "UCeqIMtLuGc3YgwkhEaG8oDg";
 
 async function main() {
   const ytApiKey = process.env.YT_API_KEY;
@@ -53,6 +54,9 @@ async function main() {
 
   // チャンネルの全動画を処理
   await processor.processChannel();
+
+  // 他のチャンネルの動画を更新
+  await processor.updateOtherChannelVideos();
 
   console.log("\n" + "=".repeat(60));
   console.log("処理が完了しました");
