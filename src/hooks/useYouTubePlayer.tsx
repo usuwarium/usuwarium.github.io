@@ -58,8 +58,8 @@ export function useYouTubePlayer({
   const [videoId, setVideoId] = useState<VideoId | undefined>(initialVideoId);
   const [currentTime, setCurrentTime] = useState(0);
   const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(Number.MAX_VALUE);
-  const [duration, setDuration] = useState(Number.MAX_VALUE);
+  const [endTime, setEndTime] = useState(Number.MAX_SAFE_INTEGER);
+  const [duration, setDuration] = useState(Number.MAX_SAFE_INTEGER);
   const [controller, setController] = useLocalStorage<YTPlayerController>("yt-controller", {
     volume: 100,
     isMuted: false,
@@ -156,7 +156,7 @@ export function useYouTubePlayer({
       });
 
       // 終了位置に達したかチェック
-      if (isPlaying && time >= endTime && playerRef.current.getVideoData()) {
+      if (isPlaying && endTime > 0 && time >= endTime && playerRef.current.getVideoData()) {
         playerRef.current.pauseVideo();
         if (onSongEndRef.current) {
           onSongEndRef.current();
@@ -214,7 +214,7 @@ export function useYouTubePlayer({
     setVideoId(undefined);
     setCurrentTime(0);
     setStartTime(0);
-    setEndTime(Number.MAX_VALUE);
+    setEndTime(Number.MAX_SAFE_INTEGER);
   }, [pauseVideo]);
 
   const seekTo = useCallback(
