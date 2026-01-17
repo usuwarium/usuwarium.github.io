@@ -9,7 +9,7 @@ export const config = {
   gas: {
     url: "https://script.google.com/macros/s/AKfycbwJlP1s21msTyA4SIrfL9mlBNp6VJEZpUV3aeAuCqePIHhp1OEqvpZ5VxEqmex8-ubtTw/exec",
   },
-  cache: {
-    duration: 1 * 60 * 60 * 1000,
+  refresh: {
+    interval: 1 * 60 * 60 * 1000,
   },
 };

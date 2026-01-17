@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { db } from "@/lib/db";
-import { useFetchData } from "./useFetchData";
+import { useContext, useEffect, useState } from "react";
+import { FetchDataContext } from "./useFetchData";
 
 export interface UseArtistSongsResult {
   availableTitles: string[];
@@ -27,23 +27,32 @@ export function useArtistSongs(selectedArtist: string): UseArtistSongsResult {
   const [availableTitles, setAvailableTitles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { hasCache, error: fdError } = useFetchData();
+  const { loading: fetchDataLoading } = useContext(FetchDataContext);
 
   useEffect(() => {
-    const promise = selectedArtist.length > 0 ? getTitlesForArtist(selectedArtist) : getAllTitles();
-    promise
-      .then((titles) => {
+    const fetchData = async () => {
+      if (fetchDataLoading) return;
+      setLoading(true);
+      setError(null);
+      try {
+        let titles: string[];
+        if (selectedArtist.length > 0) {
+          titles = await getTitlesForArtist(selectedArtist);
+        } else {
+          titles = await getAllTitles();
+        }
         setAvailableTitles(titles);
-        setLoading(false);
         setError(null);
-      })
-      .catch((err) => {
-        console.error("タイトル一覧の取得エラー:", err);
+      } catch (err) {
+        console.error(err);
+        setError("曲タイトル一覧の取得に失敗しました");
         setAvailableTitles([]);
+      } finally {
         setLoading(false);
-        setError(err instanceof Error ? err.message : "タイトル一覧の取得に失敗しました");
-      });
-  }, [selectedArtist]);
+      }
+    };
+    fetchData();
+  }, [selectedArtist, fetchDataLoading]);
 
-  return { availableTitles, loading: loading || !hasCache, error: error || fdError };
+  return { availableTitles, loading: loading || fetchDataLoading, error };
 }

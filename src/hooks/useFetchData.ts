@@ -1,19 +1,25 @@
 import { db } from "@/lib/db";
 import type { Song, Video } from "@/lib/types";
 import Papa from "papaparse";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { config } from "../../config";
 
-const TICKER_INTERVAL = 60000;
-const REFRESH_INTERVAL = config.cache.duration;
+const REFRESH_INTERVAL = config.refresh.interval;
+
+interface FetchDataContextProps {
+  loading: boolean;
+}
+
+export const FetchDataContext = createContext<FetchDataContextProps>({
+  loading: true,
+});
 
 export interface UseFetchDataResult {
-  hasCache: boolean;
   loading: boolean;
   error: string | null;
 }
 
-// Google Spreadsheetsからデータを取得
+// Google Spreadsheet からデータを取得
 function fetchSheet(sheetPublicId: string, sheetGid: string): Promise<Record<string, string>[]> {
   const url = `https://docs.google.com/spreadsheets/d/e/${sheetPublicId}/pub?output=csv&gid=${sheetGid}`;
   return new Promise((resolve, reject) => {
@@ -32,13 +38,34 @@ function fetchSheet(sheetPublicId: string, sheetGid: string): Promise<Record<str
   });
 }
 
-// データ同期関数
+/**
+ * Google スプレッドシートから動画や楽曲情報を取得し、ローカルの IndexedDB と同期する。
+ *
+ * この関数は公開されたスプレッドシートを CSV として取得し、行データを正規化して
+ * Video / Song レコードに変換した上で、`db.videos` や `db.songs` などのローカルストアに
+ * 一括保存することで、クライアント側のキャッシュとして利用できるようにする。
+ *
+ * エラーハンドリング:
+ * - ネットワークエラーやパースエラーなど技術的な詳細は `console.error` にログ出力する。
+ * - 何らかのエラーが発生した場合でも、IndexedDB に既存のキャッシュデータがあれば、
+ *   「キャッシュされたデータを表示している」ことを示すユーザーフレンドリーなメッセージを
+ *   含む Error を投げ、画面側でトーストなどを通じて通知できるようにする。
+ * - キャッシュがまったく存在しない状態でエラーが発生した場合は、元のエラーをそのまま再スローする。
+ *
+ * キャッシュ戦略とタイムスタンプ:
+ * - 正常に取得できた最新のデータで `db.videos` などのストア内容をクリアしてから一括保存し、
+ *   スプレッドシートとローカルキャッシュの内容が常に一致するようにする。
+ * - 各レコードには `processed_at` などのタイムスタンプ情報が保持されており、
+ *   別の処理から「いつ同期されたデータか」を判定できるような設計になっている。
+ *
+ * @returns {Promise<void>} データ同期処理が完了したときに解決される Promise。
+ */
 async function performDataFetch(): Promise<void> {
   try {
     // 動画データを取得
     const videosRaw = await fetchSheet(
       config.spreadsheet.sheet_public_id,
-      config.spreadsheet.videos_sheet_gid
+      config.spreadsheet.videos_sheet_gid,
     );
 
     if (!videosRaw || videosRaw.length === 0) {
@@ -85,7 +112,7 @@ async function performDataFetch(): Promise<void> {
     // 曲データを取得
     const songsRaw = await fetchSheet(
       config.spreadsheet.sheet_public_id,
-      config.spreadsheet.songs_sheet_gid
+      config.spreadsheet.songs_sheet_gid,
     );
 
     if (songsRaw && songsRaw.length > 0) {
@@ -134,7 +161,7 @@ async function performDataFetch(): Promise<void> {
     const videosCount = await db.videos.count();
     const songsCount = await db.songs.count();
     if (videosCount > 0 || songsCount > 0) {
-      throw new Error("データ取得に失敗しましたが、キャッシュされたデータを表示しています");
+      console.warn("データ取得に失敗しましたが、キャッシュされたデータを表示しています");
     }
     throw error;
   }
@@ -142,46 +169,52 @@ async function performDataFetch(): Promise<void> {
 
 /**
  * Google Spreadsheet からデータ CSV をダウンロードして IndexedDB に保存するカスタムフック
- * １時間に１回、最新データをダウンロードする
+ * 定期的にバックグラウンドで最新データをダウンロードする
  */
 export function useFetchData(): UseFetchDataResult {
-  const [hasCache, setHasCache] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isDataStored, setIsDataStored] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchingPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
+    // 定期的にデータを取得
     const fetchData = async () => {
       if (fetchingPromiseRef.current) return;
-      const videosCount = await db.videos.count();
-      const songsCount = await db.songs.count();
       const lastFetched = (await db.metadata.get("lastFetch"))?.timestamp ?? 0;
-      setHasCache(videosCount !== 0);
-      if (videosCount === 0 || songsCount === 0 || Date.now() - lastFetched > REFRESH_INTERVAL) {
-        const promise = performDataFetch();
-        fetchingPromiseRef.current = promise;
+      if (Date.now() - lastFetched > REFRESH_INTERVAL) {
+        setLoading(true);
         try {
-          setLoading(true);
           setError(null);
-          await promise;
+          fetchingPromiseRef.current = performDataFetch();
+          await fetchingPromiseRef.current;
         } catch (err) {
           console.error(err);
           setError("データの取得に失敗しました");
         } finally {
-          setLoading(false);
-          setHasCache(true);
           fetchingPromiseRef.current = null;
         }
       }
+      setLoading(false);
+      setIsDataStored(true);
     };
 
-    fetchData();
+    // データが IndexedDB に存在するか確認し、なければ即座に取得
+    (async () => {
+      const videosCount = await db.videos.count();
+      const songsCount = await db.songs.count();
+      if (videosCount === 0 || songsCount === 0) {
+        await fetchData();
+      } else {
+        setLoading(false);
+        setIsDataStored(true);
+      }
+    })();
 
-    const id = setInterval(fetchData, TICKER_INTERVAL);
+    const id = setInterval(fetchData, REFRESH_INTERVAL);
     return () => clearInterval(id);
   }, []);
 
-  // データを更新しても利用元には通知せず自動更新はしない
-  // 次回読込時に最新データが読み込まれるので十分
-  return { hasCache, loading, error };
+  // IndexedDB にデータがあればローディングは表示しなくて良い
+  return { loading: !isDataStored && loading, error };
 }

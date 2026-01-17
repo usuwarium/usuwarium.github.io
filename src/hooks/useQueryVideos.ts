@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { applySearchQuery, matchesQuickFilter } from "@/lib/filter";
 import type { Video } from "@/lib/types";
-import { useEffect, useState } from "react";
-import { useFetchData } from "./useFetchData";
+import { useContext, useEffect, useState } from "react";
+import { FetchDataContext } from "./useFetchData";
 
 export interface QueryVideosParams {
   searchQuery?: string;
@@ -79,10 +79,12 @@ export function useQueryVideos(params: QueryVideosParams): UseQueryVideosResult 
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { hasCache, error: fdError } = useFetchData();
+  const { loading: fetchDataLoading } = useContext(FetchDataContext);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (fetchDataLoading) return;
+
       setLoading(true);
       setError(null);
 
@@ -113,12 +115,13 @@ export function useQueryVideos(params: QueryVideosParams): UseQueryVideosResult 
     params.sortOrder,
     params.page,
     params.itemsPerPage,
+    fetchDataLoading,
   ]);
 
   return {
     videos,
     totalCount,
-    loading: loading || !hasCache,
-    error: error || fdError,
+    loading: loading || fetchDataLoading,
+    error,
   };
 }

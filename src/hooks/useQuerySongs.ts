@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { applySearchQuery } from "@/lib/filter";
 import type { Song } from "@/lib/types";
-import { useEffect, useState } from "react";
-import { useFetchData } from "./useFetchData";
+import { useContext, useEffect, useState } from "react";
+import { FetchDataContext } from "./useFetchData";
 
 export interface QuerySongsParams {
   searchQuery?: string;
@@ -78,11 +78,13 @@ export function useQuerySongs(params: QuerySongsParams): UseQuerySongsResult {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { hasCache, error: fdError } = useFetchData();
+  const { loading: fetchDataLoading } = useContext(FetchDataContext);
 
   // データ取得
   useEffect(() => {
     const fetchData = async () => {
+      if (fetchDataLoading) return;
+
       setLoading(true);
       setError(null);
 
@@ -105,7 +107,14 @@ export function useQuerySongs(params: QuerySongsParams): UseQuerySongsResult {
     };
 
     fetchData();
-  }, [params.searchQuery, params.artist, params.title, params.sortBy, params.sortOrder]);
+  }, [
+    params.searchQuery,
+    params.artist,
+    params.title,
+    params.sortBy,
+    params.sortOrder,
+    fetchDataLoading,
+  ]);
 
-  return { songs, totalCount, loading: loading || !hasCache, error: error || fdError };
+  return { songs, totalCount, loading: loading || fetchDataLoading, error };
 }

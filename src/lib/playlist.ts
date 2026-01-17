@@ -1,23 +1,12 @@
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { type Song, type SongId } from "./types";
-
-export type PlaylistId = string;
-
-export interface Playlist {
-  id: PlaylistId;
-  name: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PlaylistItem {
-  playlist_id: PlaylistId;
-  song_id: SongId;
-  order: number;
-}
-
-export interface PlaylistSong extends PlaylistItem, Song {}
+import {
+  type Playlist,
+  type PlaylistId,
+  type PlaylistItem,
+  type PlaylistSong,
+  type SongId,
+} from "./types";
 
 // プレイリスト一覧を取得
 export async function getAllPlaylists(): Promise<Playlist[]> {
@@ -43,7 +32,7 @@ export async function restorePlaylist(
   name: string,
   items: Array<{ song_id: SongId; order: number }>,
   created_at: string,
-  updated_at: string
+  updated_at: string,
 ): Promise<void> {
   await db.playlists.add({
     id,
@@ -56,7 +45,7 @@ export async function restorePlaylist(
       playlist_id: id,
       song_id: item.song_id,
       order: item.order,
-    }))
+    })),
   );
 }
 
@@ -77,15 +66,14 @@ export async function deletePlaylist(playlistId: PlaylistId): Promise<void> {
 // プレイリストに複数の曲を追加
 export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId[]): Promise<void> {
   const songs = await db.playlistItems.where("playlist_id").equals(playlistId).toArray();
-  let maxOrder = songs.length > 0 ? Math.max(...songs.map((s) => s.order)) : 0;
+  const maxOrder = songs.length > 0 ? Math.max(...songs.map((s) => s.order)) : 0;
 
-  for (const songId of songIds) {
-    await db.playlistItems.add({
-      playlist_id: playlistId,
-      song_id: songId,
-      order: ++maxOrder,
-    });
-  }
+  const itemsToAdd = songIds.map((songId, index) => ({
+    playlist_id: playlistId,
+    song_id: songId,
+    order: maxOrder + index + 1,
+  }));
+  await db.playlistItems.bulkAdd(itemsToAdd);
 
   await db.playlists.update(playlistId, {
     updated_at: new Date().toISOString(),
@@ -96,7 +84,7 @@ export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId
 export async function addSongToPlaylistAtPosition(
   playlistId: PlaylistId,
   songId: SongId,
-  position: number
+  position: number,
 ): Promise<void> {
   const songs = await db.playlistItems.where("playlist_id").equals(playlistId).sortBy("order");
 
@@ -121,8 +109,9 @@ export async function addSongToPlaylistAtPosition(
 // プレイリストから曲を削除
 export async function removeSongsFromPlaylist(
   playlistId: PlaylistId,
-  songIds: SongId[]
+  songIds: SongId[],
 ): Promise<void> {
+  // TODO: 曲数が増えると非効率なので改善する（大量の曲を扱うことはあまりないと思うが）
   for (const songId of songIds) {
     const playlistItem = await db.playlistItems.get([playlistId, songId]);
     if (playlistItem) {
@@ -137,7 +126,7 @@ export async function removeSongsFromPlaylist(
 // プレイリスト内の曲の順序を変更
 export async function reorderPlaylistItems(
   playlistId: PlaylistId,
-  songIds: SongId[]
+  songIds: SongId[],
 ): Promise<void> {
   const playlistItems = await db.playlistItems.where("playlist_id").equals(playlistId).toArray();
 
