@@ -135,7 +135,7 @@ export function AboutPage() {
             <br />
             少しでも推し活の助けになれれば幸いです。
             <br />
-            もし内容の誤りや不具合、改善点などがありましたら
+            もし内容の誤りや歌唱位置の指摘、不具合、改善点などがありましたら
             <a
               href="https://twitter.com/wiro34"
               target="_blank"
