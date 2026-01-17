@@ -65,3 +65,48 @@ export function matchesQuickFilter(video: Video, filterKey: string): boolean {
   const filterItem = QUICK_FILTER_ITEMS.find((item) => item.key === filterKey);
   return filterItem ? filterItem.predicate(video) : false;
 }
+
+/**
+ * 検索クエリを解析してフィルタリング条件を適用する
+ * @param items フィルタ対象のアイテム配列
+ * @param searchQuery 検索クエリ（スペース区切り、`-`で否定条件）
+ * @param getSearchableText アイテムから検索対象のテキストを取得する関数
+ * @returns フィルタリングされたアイテム配列
+ */
+export function applySearchQuery<T>(
+  items: T[],
+  searchQuery: string | undefined,
+  getSearchableText: (item: T) => string[]
+): T[] {
+  if (!searchQuery || !searchQuery.trim()) {
+    return items;
+  }
+
+  // スペース区切りでトークンに分割
+  const tokens = searchQuery.trim().split(/\s+/);
+
+  // 肯定条件と否定条件に分ける
+  const includeTokens = tokens
+    .filter((token) => !token.startsWith("-"))
+    .map((token) => token.toLowerCase());
+
+  const excludeTokens = tokens
+    .filter((token) => token.startsWith("-") && token.length > 1)
+    .map((token) => token.slice(1).toLowerCase());
+
+  return items.filter((item) => {
+    const searchableTexts = getSearchableText(item).map((text) => text.toLowerCase());
+
+    // 肯定条件: すべてのトークンが検索対象テキストのいずれかに含まれる必要がある
+    const matchesInclude = includeTokens.every((token) =>
+      searchableTexts.some((text) => text.includes(token))
+    );
+
+    // 否定条件: いずれかの除外トークンが検索対象テキストに含まれていたら除外
+    const matchesExclude = excludeTokens.some((token) =>
+      searchableTexts.some((text) => text.includes(token))
+    );
+
+    return matchesInclude && !matchesExclude;
+  });
+}

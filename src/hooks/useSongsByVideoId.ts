@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Song } from "@/lib/types";
-import { getSongsByVideoId } from "@/lib/db";
+import { db } from "@/lib/db";
+import { useFetchData } from "./useFetchData";
 
 export interface UseSongsByVideoIdResult {
   songs: Song[];
@@ -8,27 +9,35 @@ export interface UseSongsByVideoIdResult {
   error: string | null;
 }
 
+// 動画IDから歌唱情報を取得
+export async function getSongsByVideoId(videoId: string): Promise<Song[]> {
+  return (await db.songs.where("video_id").equals(videoId).sortBy("start_time")).filter(
+    (s) => s.edited
+  );
+}
+
 export function useSongsByVideoId(videoId: string): UseSongsByVideoIdResult {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { hasCache, error: fdError } = useFetchData();
 
   useEffect(() => {
-    // モーダルが開いていて videoId がある場合のみ取得
-    getSongsByVideoId(videoId)
-      .then((songsData) => {
-        setSongs(songsData);
+    const fetchSongs = async () => {
+      setLoading(true);
+      try {
+        const fetchedSongs = await getSongsByVideoId(videoId);
+        setSongs(fetchedSongs);
         setError(null);
-      })
-      .catch((err) => {
-        setError(
-          err instanceof Error ? err.message : "曲情報の取得に失敗しました"
-        );
-      })
-      .finally(() => {
+      } catch (err) {
+        console.error(err);
+        setError("曲情報の取得に失敗しました");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchSongs();
   }, [videoId]);
 
-  return { songs, loading, error };
+  return { songs, loading: loading || !hasCache, error: error || fdError };
 }

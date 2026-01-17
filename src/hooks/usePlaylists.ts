@@ -1,10 +1,10 @@
 import {
+  getAllPlaylists,
+  getPlaylistSongs,
   type Playlist,
   type PlaylistId,
   type PlaylistSong,
-  getAllPlaylists,
-  getPlaylistSongs,
-} from "@/lib/db";
+} from "@/lib/playlist";
 import type { SongId } from "@/lib/types";
 import { useEffect, useState } from "react";
 

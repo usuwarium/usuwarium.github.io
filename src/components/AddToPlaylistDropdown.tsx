@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import { FaPlus, FaBookmark, FaRegBookmark } from "react-icons/fa";
-import {
-  createPlaylist,
-  addSongsToPlaylist,
-  removeSongsFromPlaylist,
-  type PlaylistId,
-} from "@/lib/db";
 import { usePlaylists } from "@/hooks/usePlaylists";
+import {
+  addSongsToPlaylist,
+  createPlaylist,
+  type PlaylistId,
+  removeSongsFromPlaylist,
+} from "@/lib/playlist";
 import type { Song } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { FaBookmark, FaPlus, FaRegBookmark } from "react-icons/fa";
 
 interface AddToPlaylistDropdownProps {
   songs: Song[];

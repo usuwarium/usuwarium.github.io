@@ -47,3 +47,8 @@ export interface PlayingVideo {
   title: string;
   artist: string;
 }
+
+export interface Metadata {
+  key: string;
+  timestamp: number;
+}

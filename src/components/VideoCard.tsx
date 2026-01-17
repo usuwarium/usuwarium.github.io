@@ -1,10 +1,16 @@
-import { getThumbnailUrl } from "@/lib/db";
 import { humanizeDatetime } from "@/lib/humanize";
 import type { Video } from "@/lib/types";
 
 interface VideoCardProps {
   video: Video;
   onClick: (video: Video) => void;
+}
+
+function getThumbnailUrl(
+  video: Video,
+  size: "default" | "mqdefault" | "hqdefault" = "mqdefault"
+): string {
+  return `https://i.ytimg.com/vi/${video.video_id}/${size}.jpg`;
 }
 
 export function VideoCard({ video, onClick }: VideoCardProps) {

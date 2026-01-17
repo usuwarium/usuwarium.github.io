@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { getTitlesForArtist, getAllTitles } from "@/lib/db";
+import { db } from "@/lib/db";
+import { useFetchData } from "./useFetchData";
 
 export interface UseArtistSongsResult {
   availableTitles: string[];
@@ -7,11 +8,26 @@ export interface UseArtistSongsResult {
   error: string | null;
 }
 
+// 特定のアーティストの楽曲タイトル一覧を取得
+async function getTitlesForArtist(artist: string): Promise<string[]> {
+  const songs = await db.songs.where("artist").equals(artist).toArray();
+  const titleSet = new Set(songs.filter((s) => s.edited).map((s) => s.title));
+  return Array.from(titleSet).sort();
+}
+
+// 全楽曲タイトル一覧を取得
+async function getAllTitles(): Promise<string[]> {
+  const songs = await db.songs.toArray();
+  const titleSet = new Set(songs.filter((s) => s.edited).map((s) => s.title));
+  return Array.from(titleSet).sort();
+}
+
 // 選択されたアーティストの楽曲タイトル一覧を取得
 export function useArtistSongs(selectedArtist: string): UseArtistSongsResult {
   const [availableTitles, setAvailableTitles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { hasCache, error: fdError } = useFetchData();
 
   useEffect(() => {
     const promise = selectedArtist.length > 0 ? getTitlesForArtist(selectedArtist) : getAllTitles();
@@ -29,5 +45,5 @@ export function useArtistSongs(selectedArtist: string): UseArtistSongsResult {
       });
   }, [selectedArtist]);
 
-  return { availableTitles, loading, error };
+  return { availableTitles, loading: loading || !hasCache, error: error || fdError };
 }
