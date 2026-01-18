@@ -1,5 +1,5 @@
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Song, SongId } from "../lib/types";
 
 export interface UsePlayQueueResult {

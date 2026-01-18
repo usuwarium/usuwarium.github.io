@@ -4,6 +4,7 @@
 
 export type VideoId = string;
 export type SongId = string;
+export type PlaylistId = string;
 
 /**
  * 動画情報
@@ -47,3 +48,29 @@ export interface PlayingVideo {
   title: string;
   artist: string;
 }
+
+export interface Metadata {
+  key: string;
+  timestamp: number;
+}
+
+/**
+ * プレイリスト
+ */
+export interface Playlist {
+  id: PlaylistId;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * プレイリスト曲項目
+ */
+export interface PlaylistItem {
+  playlist_id: PlaylistId;
+  song_id: SongId;
+  order: number;
+}
+
+export interface PlaylistSong extends PlaylistItem, Song {}
