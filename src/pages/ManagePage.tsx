@@ -49,15 +49,16 @@ export function ManagePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [completedVideoIds, setCompletedVideoIds] = useState<Set<VideoId>>(new Set());
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const videoPlayerRef = useRef<ManageVideoPlayerRef>(null);
 
   const { videos, songs, artists, titles, reload, loading, error } = useManageData();
 
   const incompletedVideos = useMemo(() => {
-    const filtered = videos
-      .filter((v) => !v.completed)
-      .filter((v) => !completedVideoIds.has(v.video_id));
+    const filtered = showCompleted
+      ? videos
+      : videos.filter((v) => !v.completed).filter((v) => !completedVideoIds.has(v.video_id));
 
     if (!searchQuery.trim()) {
       return filtered;
@@ -74,9 +75,20 @@ export function ManagePage() {
       // タグで検索
       if (v.tags && v.tags.some((tag) => tag.toLowerCase().includes(query))) return true;
 
+      // 曲のタイトルやアーティスト名で検索
+      const videoSongs = songs.filter((s) => s.video_id === v.video_id);
+      if (
+        videoSongs.some(
+          (song) =>
+            song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query),
+        )
+      ) {
+        return true;
+      }
+
       return false;
     });
-  }, [videos, searchQuery, completedVideoIds]);
+  }, [videos, searchQuery, completedVideoIds, showCompleted, songs]);
 
   const sortedSingingParts = useMemo(() => {
     return [...singingParts].sort((a, b) => {
@@ -110,7 +122,7 @@ export function ManagePage() {
       }
       setSelectedPartId(null);
     },
-    [songs, videos]
+    [songs, videos],
   );
 
   const handleImportVideo = async () => {
@@ -141,8 +153,8 @@ export function ManagePage() {
       singingParts.map((part) =>
         part.id === selectedPartId
           ? { ...part, startTime: formatTime(Math.floor(currentTime)) }
-          : part
-      )
+          : part,
+      ),
     );
   };
 
@@ -153,8 +165,8 @@ export function ManagePage() {
       singingParts.map((part) =>
         part.id === selectedPartId
           ? { ...part, endTime: formatTime(Math.floor(currentTime)) }
-          : part
-      )
+          : part,
+      ),
     );
   };
 
@@ -165,8 +177,8 @@ export function ManagePage() {
       singingParts.map((part) =>
         part.id === selectedPartId
           ? { ...part, startTime: formatTime(Math.floor(currentTime)) }
-          : part
-      )
+          : part,
+      ),
     );
   };
 
@@ -177,8 +189,8 @@ export function ManagePage() {
       singingParts.map((part) =>
         part.id === selectedPartId
           ? { ...part, endTime: formatTime(Math.floor(currentTime)) }
-          : part
-      )
+          : part,
+      ),
     );
   };
 
@@ -199,7 +211,7 @@ export function ManagePage() {
     if (!title) return part;
 
     const matchingSongs = songs.filter(
-      (song) => song.title === title && !!song.start_time && !!song.end_time
+      (song) => song.title === title && !!song.start_time && !!song.end_time,
     );
 
     if (matchingSongs.length === 0) return part;
@@ -251,7 +263,7 @@ export function ManagePage() {
           }
 
           return updatedPart;
-        })
+        }),
       );
     };
   };
@@ -269,7 +281,7 @@ export function ManagePage() {
           const newTimeStr = formatTime(newSeconds);
 
           setSingingParts((prev) =>
-            prev.map((part) => (part.id === id ? { ...part, [field]: newTimeStr } : part))
+            prev.map((part) => (part.id === id ? { ...part, [field]: newTimeStr } : part)),
           );
         }
       }
@@ -298,7 +310,7 @@ export function ManagePage() {
           </button>
         </div>
       ),
-      { duration: 5000 }
+      { duration: 5000 },
     );
   };
 
@@ -306,7 +318,7 @@ export function ManagePage() {
     if (!currentVideo) return;
 
     const validParts = singingParts.filter(
-      (part) => part.title && part.artist && part.endTime !== null
+      (part) => part.title && part.artist && part.endTime !== null,
     );
 
     if (validParts.length === 0) {
@@ -337,7 +349,7 @@ export function ManagePage() {
     if (!currentVideo) return;
 
     const validParts = singingParts.filter(
-      (part) => part.title && part.artist && part.endTime !== null
+      (part) => part.title && part.artist && part.endTime !== null,
     );
 
     if (validParts.length === 0) {
@@ -385,7 +397,7 @@ export function ManagePage() {
   const handleSetSingingFalse = async (videoId: string) => {
     if (
       !confirm(
-        "この動画を歌枠ではない動画として設定しますか?\n紐づく歌唱パートがあれば削除されます。"
+        "この動画を歌枠ではない動画として設定しますか?\n紐づく歌唱パートがあれば削除されます。",
       )
     ) {
       return;
@@ -396,7 +408,7 @@ export function ManagePage() {
       toast.success(
         `singingをfalseに設定しました${
           result.deletedCount > 0 ? `（${result.deletedCount}曲削除）` : ""
-        }`
+        }`,
       );
       setCompletedVideoIds(new Set(completedVideoIds).add(videoId));
     } catch (error) {
@@ -473,6 +485,17 @@ export function ManagePage() {
                 {loading ? "読み込み中..." : "再読み込み"}
               </button>
             </div>
+            <div className="mb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showCompleted}
+                  onChange={(e) => setShowCompleted(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">完了済みも表示</span>
+              </label>
+            </div>
 
             {loading ? (
               <p className="text-center py-8">読み込み中...</p>
@@ -502,27 +525,31 @@ export function ManagePage() {
                         <div className="text-sm text-gray-400">
                           {songs.filter((s) => s.video_id === video.video_id).length}曲
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetSingingFalse(video.video_id);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 bg-red-800 hover:bg-red-700 rounded transition text-sm"
-                          title="歌枠ではない動画として設定"
-                        >
-                          NOT歌枠
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteVideo(video.video_id);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 bg-green-700 hover:bg-green-600 rounded transition text-sm"
-                          title="完了にする"
-                        >
-                          <FaCheck />
-                          完了
-                        </button>
+                        {!video.completed && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSetSingingFalse(video.video_id);
+                              }}
+                              className="flex items-center gap-1 px-3 py-1 bg-red-800 hover:bg-red-700 rounded transition text-sm"
+                              title="歌枠ではない動画として設定"
+                            >
+                              NOT歌枠
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCompleteVideo(video.video_id);
+                              }}
+                              className="flex items-center gap-1 px-3 py-1 bg-green-700 hover:bg-green-600 rounded transition text-sm"
+                              title="完了にする"
+                            >
+                              <FaCheck />
+                              完了
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -33,7 +33,18 @@ export function useManageData(): UseVideosResult {
       try {
         const [videos, songs] = await getVideosAndSongs();
         setVideos(videos.filter((v) => v.available && v.singing));
-        setSongs(songs);
+        setSongs(
+          songs.map((song) => {
+            // 作業途中でタイトルやアーティストが空の場合 undefined になることがあるためパッチ
+            if (typeof song.title !== "string") {
+              console.log("song.title is not string:", song);
+            }
+            if (typeof song.artist !== "string") {
+              console.log("song.artist is not string:", song);
+            }
+            return { ...song, title: song.title ?? "", artist: song.artist ?? "" };
+          }),
+        );
         const artistSet = new Set<string>();
         const titleSet = new Set<string>();
         songs.forEach((song) => {
@@ -44,9 +55,7 @@ export function useManageData(): UseVideosResult {
         setTitles(Array.from(titleSet));
       } catch (err) {
         console.error(err);
-        setError(
-          err instanceof Error ? err.message : "データの取得に失敗しました"
-        );
+        setError(err instanceof Error ? err.message : "データの取得に失敗しました");
       } finally {
         setLoading(false);
       }
