@@ -237,7 +237,7 @@ function addSongs(spreadsheet, videoId, songs, completed) {
     // データを追加
     songs.forEach((song) => {
       const row = headers.map((header) =>
-        song[header] !== undefined ? escapeFormula(song[header]) : "",
+        song[header] !== undefined ? escapeString(song[header]) : "",
       );
       sheet.appendRow(row);
     });
@@ -423,9 +423,9 @@ function rowToObject(headers, row) {
   return obj;
 }
 
-// =で始まるセルの値をエスケープ
-function escapeFormula(value) {
-  if (typeof value === "string" && value.startsWith("=")) {
+// セルの値をエスケープ（文字列は常に'を付けて文字列として保存）
+function escapeString(value) {
+  if (typeof value === "string" && value !== "") {
     return "'" + value;
   }
   return value;

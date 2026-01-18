@@ -76,7 +76,6 @@ export function ManagePage() {
       if (v.tags && v.tags.some((tag) => tag.toLowerCase().includes(query))) return true;
 
       // 曲のタイトルやアーティスト名で検索
-      console.log("searching songs for video:", v.video_id, filtered.length);
       const videoSongs = songs.filter((s) => s.video_id === v.video_id);
       if (
         videoSongs.some(
@@ -211,20 +210,9 @@ export function ManagePage() {
     const title = part.title.trim();
     if (!title) return part;
 
-    console.log("autoFillFromTitle:", title);
-    const matchingSongs = songs.filter((song) => {
-      if (song.title.includes("3月")) {
-        console.log(
-          song.title,
-          "===",
-          title,
-          song.title === title,
-          !!song.start_time,
-          !!song.end_time,
-        );
-      }
-      return song.title === title && !!song.start_time && !!song.end_time;
-    });
+    const matchingSongs = songs.filter(
+      (song) => song.title === title && !!song.start_time && !!song.end_time,
+    );
 
     if (matchingSongs.length === 0) return part;
 
