@@ -42,7 +42,7 @@ function doPost(e) {
         false,
         "他の操作が実行中です。しばらく待ってから再度お試しください",
         null,
-        423
+        423,
       );
     }
 
@@ -79,6 +79,9 @@ function getData(spreadsheet) {
     .slice(1)
     .map((row) => {
       const video = rowToObject(videoHeaders, row);
+      if (video.title !== undefined && video.title !== null) {
+        video.title = String(video.title);
+      }
       // tagsを文字列から配列に変換
       if (video.tags && typeof video.tags === "string") {
         try {
@@ -103,6 +106,13 @@ function getData(spreadsheet) {
   const songHeaders = songData[0];
   const songs = songData.slice(1).map((row) => {
     const song = rowToObject(songHeaders, row);
+    // title, artistを文字列として扱う（数字のみのタイトルやアーティストを考慮）
+    if (song.title !== undefined && song.title !== null) {
+      song.title = String(song.title);
+    }
+    if (song.artist !== undefined && song.artist !== null) {
+      song.artist = String(song.artist);
+    }
     // tagsを文字列から配列に変換
     if (song.tags && typeof song.tags === "string") {
       try {
@@ -227,7 +237,7 @@ function addSongs(spreadsheet, videoId, songs, completed) {
     // データを追加
     songs.forEach((song) => {
       const row = headers.map((header) =>
-        song[header] !== undefined ? escapeFormula(song[header]) : ""
+        song[header] !== undefined ? escapeFormula(song[header]) : "",
       );
       sheet.appendRow(row);
     });
@@ -528,6 +538,6 @@ function createResponse(success, message, data = null, statusCode = 200) {
   }
 
   return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(
-    ContentService.MimeType.JSON
+    ContentService.MimeType.JSON,
   );
 }
