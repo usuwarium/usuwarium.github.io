@@ -45,7 +45,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
         event.controller.startVideo(nextSong.video_id, nextSong.start_time, nextSong.end_time);
       }
     },
-    [playForward]
+    [playForward],
   );
 
   const {
@@ -79,7 +79,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
         startVideo(playingSong.video_id, playingSong.start_time, playingSong.end_time);
       }
     },
-    [isReady, songs, startVideo]
+    [isReady, songs, startVideo],
   );
 
   // 外部に公開する操作メソッド
@@ -105,7 +105,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
         stopVideo();
       },
     }),
-    [songs, isVisible, startVideo, play, playAll, playShuffled, stopVideo, clearQueue, playSong]
+    [songs, isVisible, startVideo, play, playAll, playShuffled, stopVideo, clearQueue, playSong],
   );
 
   const seekbarRef = useRef<HTMLInputElement>(null);
@@ -181,7 +181,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
   return (
     <>
       {/* YouTubeプレイヤー（フッターの上にフローティング） */}
-      <div className="absolute top-[-182px] left-[50%] z-50 flex justify-center md:justify-end transform-[translate(-50%,0)] md:transform-[translate(47%,0)] m-h-[180px] rounded-lg overflow-hidden shadow-2xl transition-all">
+      <div className="absolute top-[-182px] left-[50%] md:right-3 z-50 flex justify-center md:justify-end transform-[translate(-50%,0)] md:transform-none m-h-[180px] rounded-lg overflow-hidden shadow-2xl transition-all">
         <div className={`${videoId ? "" : "hidden"}`}>{Player}</div>
       </div>
 
