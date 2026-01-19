@@ -51,3 +51,10 @@ export interface TimestampInfo {
   start_time: number;
   end_time?: number;
 }
+
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: typeof YT;
+  }
+}
