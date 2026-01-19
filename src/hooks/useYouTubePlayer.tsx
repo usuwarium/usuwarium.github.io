@@ -1,6 +1,7 @@
 import type { VideoId } from "@/lib/types";
 import { useCallback, useEffect, useRef, useState, type JSX } from "react";
 import useLocalStorage from "./useLocalStorage";
+import toast from "react-hot-toast";
 
 interface YTPlayerController {
   volume: number;
@@ -18,6 +19,30 @@ export interface YouTubePlayerParams {
   visible?: boolean;
   controls?: boolean;
   onSongEnd?: (event: SongEndEvent) => void;
+}
+
+/**
+ * YouTube Iframe API を読み込む
+ */
+async function loadYouTubeAPI(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.YT && window.YT.Player) {
+      resolve();
+      return;
+    }
+    window.onYouTubeIframeAPIReady = () => resolve();
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      tag.onerror = () => {
+        reject(new Error("Failed to load YouTube Iframe API"));
+      };
+      tag.onabort = () => {
+        reject(new Error("YouTube Iframe API loading aborted"));
+      };
+      document.head.appendChild(tag);
+    }
+  });
 }
 
 export interface UseYouTubePlayerResult {
@@ -64,10 +89,24 @@ export function useYouTubePlayer({
     volume: 100,
     isMuted: false,
   });
+  const [isAPIReady, setIsAPIReady] = useState(false);
   // 操作するたびにプレイヤーが再生成されるのを防ぐため参照をrefで保持
   const controllerRef = useRef(controller);
   const onSongEndRef = useRef<() => void>(() => {});
   const startTimeRef = useRef<number>(0);
+
+  // YT Player API の初期化
+  useEffect(() => {
+    (async () => {
+      try {
+        await loadYouTubeAPI();
+        setIsAPIReady(true);
+      } catch (error) {
+        console.error(error);
+        toast.error("YouTube APIの読み込みに失敗しました。");
+      }
+    })();
+  }, []);
 
   // startTime の変更を ref に同期
   useEffect(() => {
@@ -75,7 +114,7 @@ export function useYouTubePlayer({
   }, [startTime]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !isAPIReady) return;
     playerRef.current = new window.YT.Player(containerRef.current, {
       videoId: initialVideoId ?? "",
       width,
@@ -131,7 +170,7 @@ export function useYouTubePlayer({
         playerRef.current = null;
       }
     };
-  }, [initialVideoId, controls, width, height]);
+  }, [isAPIReady, initialVideoId, controls, width, height]);
 
   // プレイヤー状態を監視
   useEffect(() => {
@@ -192,7 +231,7 @@ export function useYouTubePlayer({
       setVideoId(id);
       setIsPlaying(true);
     },
-    [duration]
+    [duration],
   );
 
   const playVideo = useCallback(() => {
@@ -224,7 +263,7 @@ export function useYouTubePlayer({
         playerRef.current.seekTo(time, true);
       }
     },
-    [startTime, endTime]
+    [startTime, endTime],
   );
 
   const changeVolume = useCallback(
@@ -243,7 +282,7 @@ export function useYouTubePlayer({
         setController({ ...controller, volume: vol });
       }
     },
-    [controller, setController]
+    [controller, setController],
   );
 
   const toggleMute = useCallback(() => {
@@ -271,7 +310,7 @@ export function useYouTubePlayer({
         setEndTime(duration);
       }
     },
-    [duration]
+    [duration],
   );
 
   useEffect(() => {
