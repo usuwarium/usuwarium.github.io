@@ -261,6 +261,7 @@ export function useYouTubePlayer({
       if (!playerRef.current || !playerRef.current.seekTo) return;
       if (startTime <= time || time < endTime) {
         playerRef.current.seekTo(time, true);
+        setCurrentTime(time);
       }
     },
     [startTime, endTime],
