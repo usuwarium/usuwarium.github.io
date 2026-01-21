@@ -216,12 +216,15 @@ export function ManagePage() {
 
     if (matchingSongs.length === 0) return part;
 
-    // 複数の曲が見つかった場合、最も短い曲を選択
-    const matchingSong = matchingSongs.reduce((shortest, current) => {
-      const shortestDuration = shortest.end_time! - shortest.start_time!;
-      const currentDuration = current.end_time! - current.start_time!;
-      return currentDuration < shortestDuration ? current : shortest;
-    });
+    // 曲の長さでソートして、2番目に短い曲を選択（1件しかない場合はそれを使用）
+    const sortedSongs = matchingSongs
+      .map((song) => ({
+        song,
+        duration: song.end_time! - song.start_time!,
+      }))
+      .sort((a, b) => a.duration - b.duration);
+
+    const matchingSong = sortedSongs.length > 1 ? sortedSongs[1].song : sortedSongs[0].song;
 
     const updatedPart = { ...part, artist: matchingSong.artist };
 
