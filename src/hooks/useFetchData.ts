@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import type { Song, Video } from "@/lib/types";
 import Papa from "papaparse";
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { config } from "../../config";
 
 const REFRESH_INTERVAL = config.refresh.interval;
@@ -21,7 +21,7 @@ export interface UseFetchDataResult {
 
 // Google Spreadsheet からデータを取得
 function fetchSheet(sheetPublicId: string, sheetGid: string): Promise<Record<string, string>[]> {
-  const url = `https://docs.google.com/spreadsheets/d/e/${sheetPublicId}/pub?output=csv&gid=${sheetGid}`;
+  const url = `https://docs.google.com/spreadsheets/d/e/${sheetPublicId}/pub?output=csv&gid=${sheetGid}&t=${new Date().getTime()}`;
   return new Promise((resolve, reject) => {
     Papa.parse<Record<string, string>>(url, {
       download: true,
@@ -36,6 +36,28 @@ function fetchSheet(sheetPublicId: string, sheetGid: string): Promise<Record<str
       },
     });
   });
+}
+
+// メタデータシートからlast_updated_atを取得
+async function fetchLastUpdatedAt(): Promise<string> {
+  try {
+    const metadataRaw = await fetchSheet(
+      config.spreadsheet.sheet_public_id,
+      config.spreadsheet.metadata_sheet_gid,
+    );
+    const lastUpdatedRow = metadataRaw.find((row) => row.key === "last_updated_at");
+    return lastUpdatedRow?.value || String(Date.now());
+  } catch (error) {
+    console.error("メタデータの取得に失敗:", error);
+    // fallback: 時刻のタイムスタンプを返す
+    const d = new Date();
+    const yyyymmddhh =
+      d.getFullYear() +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      String(d.getDate()).padStart(2, "0") +
+      String(d.getHours()).padStart(2, "0");
+    return yyyymmddhh;
+  }
 }
 
 /**
@@ -60,7 +82,7 @@ function fetchSheet(sheetPublicId: string, sheetGid: string): Promise<Record<str
  *
  * @returns {Promise<void>} データ同期処理が完了したときに解決される Promise。
  */
-async function performDataFetch(): Promise<void> {
+async function performDataFetch(serverLastUpdatedAt: string): Promise<void> {
   try {
     // 動画データを取得
     const videosRaw = await fetchSheet(
@@ -153,8 +175,8 @@ async function performDataFetch(): Promise<void> {
       await db.songs.bulkPut(songsData);
     }
 
-    // 同期完了のタイムスタンプを保存
-    await db.metadata.put({ key: "lastFetch", timestamp: Date.now() });
+    // サーバー側のlast_updated_atを保存
+    localStorage.setItem("lastUpdatedAt", serverLastUpdatedAt);
   } catch (error) {
     console.error("データ同期エラー:", error);
     // 古いキャッシュがあるかチェック
@@ -167,6 +189,8 @@ async function performDataFetch(): Promise<void> {
   }
 }
 
+let fetchingPromise: Promise<void> | null = null;
+
 /**
  * Google Spreadsheet からデータ CSV をダウンロードして IndexedDB に保存するカスタムフック
  * 定期的にバックグラウンドで最新データをダウンロードする
@@ -175,42 +199,32 @@ export function useFetchData(): UseFetchDataResult {
   const [isDataStored, setIsDataStored] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const fetchingPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
-    // 定期的にデータを取得
     const fetchData = async () => {
-      if (fetchingPromiseRef.current) return;
-      const lastFetched = (await db.metadata.get("lastFetch"))?.timestamp ?? 0;
-      if (Date.now() - lastFetched > REFRESH_INTERVAL) {
-        setLoading(true);
-        try {
-          setError(null);
-          fetchingPromiseRef.current = performDataFetch();
-          await fetchingPromiseRef.current;
-        } catch (err) {
-          console.error(err);
-          setError("データの取得に失敗しました");
-        } finally {
-          fetchingPromiseRef.current = null;
+      if (fetchingPromise) return;
+      setLoading(true);
+      try {
+        setError(null);
+        const localLastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+        const serverLastUpdatedAt = await fetchLastUpdatedAt();
+        if (serverLastUpdatedAt !== localLastUpdatedAt) {
+          fetchingPromise = performDataFetch(serverLastUpdatedAt);
+          await fetchingPromise;
         }
-      }
-      setLoading(false);
-      setIsDataStored(true);
-    };
-
-    // データが IndexedDB に存在するか確認し、なければ即座に取得
-    (async () => {
-      const videosCount = await db.videos.count();
-      const songsCount = await db.songs.count();
-      if (videosCount === 0 || songsCount === 0) {
-        await fetchData();
-      } else {
+      } catch (err) {
+        console.error(err);
+        setError("データの取得に失敗しました");
+      } finally {
         setLoading(false);
         setIsDataStored(true);
+        fetchingPromise = null;
       }
-    })();
+    };
 
+    fetchData();
+
+    // 定期的にデータを取得
     const id = setInterval(fetchData, REFRESH_INTERVAL);
     return () => clearInterval(id);
   }, []);
