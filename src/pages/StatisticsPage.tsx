@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import Select from "react-select";
 import { useQuerySongs } from "@/hooks/useQuerySongs";
 import { useArtists } from "@/hooks/useArtists";
@@ -368,11 +368,10 @@ export function StatisticsPage() {
                       const artistSongs = isExpanded ? getArtistSongs(stat.artist) : [];
 
                       return (
-                        <>
-                          <tr
-                            key={viewMode === "song" ? `${stat.artist}-${stat.title}` : stat.artist}
-                            className="border-t border-gray-700 hover:bg-gray-700/50 transition"
-                          >
+                        <React.Fragment
+                          key={viewMode === "song" ? `${stat.artist}-${stat.title}` : stat.artist}
+                        >
+                          <tr className="border-t border-gray-700 hover:bg-gray-700/50 transition">
                             <td className="p-2 text-gray-400 text-right">{actualRank}</td>
                             {viewMode === "song" ? (
                               <>
@@ -423,7 +422,7 @@ export function StatisticsPage() {
                                 </tr>
                               );
                             })}
-                        </>
+                        </React.Fragment>
                       );
                     })
                   )}
