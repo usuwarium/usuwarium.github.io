@@ -175,6 +175,7 @@ function addVideo(spreadsheet, video) {
           return videoData[header] !== undefined ? videoData[header] : data[i][index];
         });
         sheet.getRange(i + 1, 1, 1, headers.length).setValues([updatedRow]);
+        updateLastUpdatedAt(spreadsheet);
         return createResponse(true, "動画情報を更新しました", {
           video: videoData,
         });
@@ -184,6 +185,8 @@ function addVideo(spreadsheet, video) {
     // 新規動画として追加
     const row = headers.map((header) => (videoData[header] !== undefined ? videoData[header] : ""));
     sheet.appendRow(row);
+
+    updateLastUpdatedAt(spreadsheet);
 
     return createResponse(true, "動画を追加しました", {
       video: videoData,
@@ -261,6 +264,8 @@ function addSongs(spreadsheet, videoId, songs, completed) {
       }
     }
 
+    updateLastUpdatedAt(spreadsheet);
+
     return createResponse(true, "曲を追加しました");
   } finally {
     setLock(spreadsheet, false);
@@ -292,6 +297,8 @@ function completeVideo(spreadsheet, videoId) {
       if (data[i][videoIdIndex] === videoId) {
         // completed列をtrueに更新
         sheet.getRange(i + 1, completedIndex + 1).setValue(true);
+
+        updateLastUpdatedAt(spreadsheet);
 
         logAccess("COMPLETE_VIDEO", videoId, "success");
 
@@ -356,6 +363,8 @@ function setSingingFalse(spreadsheet, videoId) {
       }
     }
 
+    updateLastUpdatedAt(spreadsheet);
+
     logAccess("SET_SINGING_FALSE", videoId, "success");
 
     return createResponse(true, `singingをfalseに設定し、${deletedCount}曲を削除しました`, {
@@ -409,9 +418,35 @@ function getOrCreateMetadataSheet(spreadsheet) {
     metadataSheet = spreadsheet.insertSheet(METADATA_SHEET_NAME);
     metadataSheet.appendRow(["key", "value"]);
     metadataSheet.appendRow(["locked", false]);
+    metadataSheet.appendRow(["last_updated_at", ""]);
+  } else {
+    // 既存のシートに last_updated_at が無ければ追加
+    const data = metadataSheet.getDataRange().getValues();
+    const hasLastUpdatedAt = data.slice(1).some((row) => row[0] === "last_updated_at");
+    if (!hasLastUpdatedAt) {
+      metadataSheet.appendRow(["last_updated_at", ""]);
+    }
   }
 
   return metadataSheet;
+}
+
+// 最終更新日時を更新
+function updateLastUpdatedAt(spreadsheet) {
+  const metadataSheet = getOrCreateMetadataSheet(spreadsheet);
+  const data = metadataSheet.getDataRange().getValues();
+  const now = new Date().toISOString();
+
+  // last_updated_at行を検索して更新
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === "last_updated_at") {
+      metadataSheet.getRange(i + 1, 2).setValue(now);
+      return;
+    }
+  }
+
+  // last_updated_at行が存在しない場合は追加
+  metadataSheet.appendRow(["last_updated_at", now]);
 }
 
 // 行データをオブジェクトに変換
