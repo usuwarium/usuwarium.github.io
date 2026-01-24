@@ -2,7 +2,6 @@ import { YouTubePlayer, type YouTubePlayerRef } from "@/components/YouTubePlayer
 import { usePlaylists } from "@/hooks/usePlaylists";
 import { timestampSpan } from "@/lib/humanize";
 import {
-  type PlaylistId,
   addSongToPlaylistAtPosition,
   createPlaylist,
   deletePlaylist,
@@ -13,7 +12,7 @@ import {
   restorePlaylist,
   updatePlaylist,
 } from "@/lib/playlist";
-import type { SongId } from "@/lib/types";
+import type { PlaylistId, SongId } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 import { createCallable } from "react-call";
 import toast from "react-hot-toast";
@@ -114,7 +113,7 @@ export function PlaylistPage() {
                   playlist.name,
                   items,
                   playlist.created_at,
-                  playlist.updated_at
+                  playlist.updated_at,
                 );
                 reload();
                 toast.dismiss(t.id);
@@ -126,7 +125,7 @@ export function PlaylistPage() {
             </button>
           </div>
         ),
-        { duration: 5000 }
+        { duration: 5000 },
       );
     }
   };
@@ -165,7 +164,7 @@ export function PlaylistPage() {
           </button>
         </div>
       ),
-      { duration: 5000 }
+      { duration: 5000 },
     );
   };
 
@@ -179,7 +178,7 @@ export function PlaylistPage() {
     }
     await reorderPlaylistItems(
       selectedPlaylistId,
-      newOrder.map((s) => s.song_id)
+      newOrder.map((s) => s.song_id),
     );
     reload();
   };
