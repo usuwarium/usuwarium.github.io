@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import type { Song } from "@/lib/types";
-import { useContext, useEffect, useState } from "react";
-import { FetchDataContext } from "./useFetchData";
+import useSWR from "swr";
 
 export interface UseSongsByVideoIdResult {
   songs: Song[];
@@ -17,28 +16,32 @@ export async function getSongsByVideoId(videoId: string): Promise<Song[]> {
 }
 
 export function useSongsByVideoId(videoId: string): UseSongsByVideoIdResult {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { loading: fetchDataLoading } = useContext(FetchDataContext);
-
-  useEffect(() => {
-    const fetchSongs = async () => {
-      if (fetchDataLoading) return;
-      setLoading(true);
-      try {
-        const fetchedSongs = await getSongsByVideoId(videoId);
-        setSongs(fetchedSongs);
-        setError(null);
-      } catch (err) {
-        console.error(err);
-        setError("曲情報の取得に失敗しました");
-      } finally {
-        setLoading(false);
+  const lastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+  const { data: syncStatus, isLoading: isSyncLoading } = useSWR("usuwarium-db");
+  const { data, isLoading, error } = useSWR(
+    ["getSongsByVideoId", syncStatus?.updatedAt, videoId],
+    async () => {
+      if (lastUpdatedAt === null && !syncStatus) {
+        return undefined;
       }
-    };
-    fetchSongs();
-  }, [videoId, fetchDataLoading]);
+      return await getSongsByVideoId(videoId);
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      keepPreviousData: true,
+    },
+  );
 
-  return { songs, loading: loading || fetchDataLoading, error };
+  const isInitialLoading = lastUpdatedAt === null && (isSyncLoading || !syncStatus);
+
+  if (error) {
+    console.error("useSongsByVideoId error:", error);
+  }
+
+  return {
+    songs: data ?? [],
+    loading: isInitialLoading || (isLoading && !data),
+    error: error ? "曲情報の取得に失敗しました" : null,
+  };
 }

@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
-import { useContext, useEffect, useState } from "react";
-import { FetchDataContext } from "./useFetchData";
+import useSWR from "swr";
 
 export interface UseArtistSongsResult {
   availableTitles: string[];
@@ -24,35 +23,36 @@ async function getAllTitles(): Promise<string[]> {
 
 // 選択されたアーティストの楽曲タイトル一覧を取得
 export function useArtistSongs(selectedArtist: string): UseArtistSongsResult {
-  const [availableTitles, setAvailableTitles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { loading: fetchDataLoading } = useContext(FetchDataContext);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (fetchDataLoading) return;
-      setLoading(true);
-      setError(null);
-      try {
-        let titles: string[];
-        if (selectedArtist.length > 0) {
-          titles = await getTitlesForArtist(selectedArtist);
-        } else {
-          titles = await getAllTitles();
-        }
-        setAvailableTitles(titles);
-        setError(null);
-      } catch (err) {
-        console.error(err);
-        setError("曲タイトル一覧の取得に失敗しました");
-        setAvailableTitles([]);
-      } finally {
-        setLoading(false);
+  const lastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+  const { data: syncStatus, isLoading: isSyncLoading } = useSWR("usuwarium-db");
+  const { data, isLoading, error } = useSWR(
+    ["getArtistSongs", syncStatus?.updatedAt, selectedArtist],
+    async () => {
+      if (lastUpdatedAt === null && !syncStatus) {
+        return undefined;
       }
-    };
-    fetchData();
-  }, [selectedArtist, fetchDataLoading]);
+      if (selectedArtist.length > 0) {
+        return await getTitlesForArtist(selectedArtist);
+      } else {
+        return await getAllTitles();
+      }
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      keepPreviousData: true,
+    },
+  );
 
-  return { availableTitles, loading: loading || fetchDataLoading, error };
+  const isInitialLoading = lastUpdatedAt === null && (isSyncLoading || !syncStatus);
+
+  if (error) {
+    console.error("useArtistSongs error:", error);
+  }
+
+  return {
+    availableTitles: data ?? [],
+    loading: isInitialLoading || (isLoading && !data),
+    error: error ? "曲タイトル一覧の取得に失敗しました" : null,
+  };
 }

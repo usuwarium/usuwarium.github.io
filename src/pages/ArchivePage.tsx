@@ -85,7 +85,7 @@ export function ArchivePage() {
         }
         return prev;
       });
-    }
+    },
   );
 
   // 動画データを取得

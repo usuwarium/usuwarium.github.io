@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { applySearchQuery } from "@/lib/filter";
 import type { Song } from "@/lib/types";
-import { useContext, useEffect, useState } from "react";
-import { FetchDataContext } from "./useFetchData";
+import useSWR from "swr";
 
 export interface QuerySongsParams {
   searchQuery?: string;
@@ -74,47 +73,39 @@ async function querySongs(params: {
 }
 
 export function useQuerySongs(params: QuerySongsParams): UseQuerySongsResult {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { loading: fetchDataLoading } = useContext(FetchDataContext);
-
-  // データ取得
-  useEffect(() => {
-    const fetchData = async () => {
-      if (fetchDataLoading) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { songs: fetchedSongs, count } = await querySongs({
-          freeSearch: params.searchQuery,
-          selectedArtist: params.artist,
-          selectedTitle: params.title,
-          sortBy: params.sortBy,
-          sortOrder: params.sortOrder,
-        });
-        setSongs(fetchedSongs);
-        setTotalCount(count);
-      } catch (error) {
-        console.error(error);
-        setError("データの取得に失敗しました");
-      } finally {
-        setLoading(false);
+  const lastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+  const { data: syncStatus, isLoading: isSyncLoading } = useSWR("usuwarium-db");
+  const { data, isLoading, error } = useSWR(
+    ["querySongs", syncStatus?.updatedAt, params],
+    async () => {
+      if (lastUpdatedAt === null && !syncStatus) {
+        return undefined;
       }
-    };
+      return await querySongs({
+        freeSearch: params.searchQuery,
+        selectedArtist: params.artist,
+        selectedTitle: params.title,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+      });
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      keepPreviousData: true,
+    },
+  );
 
-    fetchData();
-  }, [
-    params.searchQuery,
-    params.artist,
-    params.title,
-    params.sortBy,
-    params.sortOrder,
-    fetchDataLoading,
-  ]);
+  const isInitialLoading = lastUpdatedAt === null && (isSyncLoading || !syncStatus);
 
-  return { songs, totalCount, loading: loading || fetchDataLoading, error };
+  if (error) {
+    console.error("useQuerySongs error:", error);
+  }
+
+  return {
+    songs: data?.songs ?? [],
+    totalCount: data?.count ?? 0,
+    loading: isInitialLoading || (isLoading && !data),
+    error: error ? "データの取得に失敗しました" : null,
+  };
 }
