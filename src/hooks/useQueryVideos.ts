@@ -62,7 +62,7 @@ async function queryVideos(params: {
   }
 
   // 検索クエリを適用
-  results = applySearchQuery(results, searchQuery, (video) => [video.title, ...video.tags]);
+  results = applySearchQuery(results, searchQuery, (video) => [video.title]);
 
   // 動画の総数
   const count = results.length;
