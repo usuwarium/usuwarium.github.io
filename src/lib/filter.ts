@@ -76,7 +76,7 @@ export function matchesQuickFilter(video: Video, filterKey: string): boolean {
 export function applySearchQuery<T>(
   items: T[],
   searchQuery: string | undefined,
-  getSearchableText: (item: T) => string[]
+  getSearchableText: (item: T) => string[],
 ): T[] {
   if (!searchQuery || !searchQuery.trim()) {
     return items;
@@ -99,12 +99,12 @@ export function applySearchQuery<T>(
 
     // 肯定条件: すべてのトークンが検索対象テキストのいずれかに含まれる必要がある
     const matchesInclude = includeTokens.every((token) =>
-      searchableTexts.some((text) => text.includes(token))
+      searchableTexts.some((text) => text.includes(token)),
     );
 
     // 否定条件: いずれかの除外トークンが検索対象テキストに含まれていたら除外
     const matchesExclude = excludeTokens.some((token) =>
-      searchableTexts.some((text) => text.includes(token))
+      searchableTexts.some((text) => text.includes(token)),
     );
 
     return matchesInclude && !matchesExclude;
