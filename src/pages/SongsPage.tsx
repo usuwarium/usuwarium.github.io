@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import { FaListUl, FaRegBookmark, FaTimesCircle } from "react-icons/fa";
 import { IoMdMusicalNote } from "react-icons/io";
 import Select from "react-select";
-import { MdBookmarkAdded } from "react-icons/md";
 import { LoadingIcon } from "@/components/LoadingIcon";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { RiPlayListAddFill } from "react-icons/ri";
@@ -117,7 +116,7 @@ export function SongsPage() {
         }
         return prev;
       });
-    }
+    },
   );
 
   // アーティストとタイトル一覧を取得
@@ -236,14 +235,14 @@ export function SongsPage() {
       { value: "", label: "すべて" },
       ...artists.map((artist) => ({ value: artist, label: artist })),
     ],
-    [artists]
+    [artists],
   );
   const titleOptions: OptionType[] = useMemo(
     () => [
       { value: "", label: "すべて" },
       ...availableTitles.map((title) => ({ value: title, label: title })),
     ],
-    [availableTitles]
+    [availableTitles],
   );
 
   if (songsError) {

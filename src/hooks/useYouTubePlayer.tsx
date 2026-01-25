@@ -9,7 +9,7 @@ interface YTPlayerController {
 }
 
 export interface SongEndEvent {
-  controller: Pick<UseYouTubePlayerResult, "startVideo">;
+  controller: Pick<UseYouTubePlayerResult, "startVideo" | "stopVideo">;
 }
 
 export interface YouTubePlayerParams {
@@ -216,6 +216,7 @@ export function useYouTubePlayer({
   const startVideo = useCallback(
     (id: VideoId, startTime?: number, endTime?: number) => {
       if (!playerRef.current) return;
+      if (!playerRef.current?.loadVideoById) return;
       // 再生する曲が同一動画内ならシークのみ行ったほうが良いが
       // 素早く操作したときに不具合が起きることがあるため毎回動画を読み込む
       // 原因不明だが seekTo で指定した位置にシークせず0秒に戻ってしまうことがある
@@ -317,10 +318,10 @@ export function useYouTubePlayer({
   useEffect(() => {
     onSongEndRef.current = () => {
       if (onSongEnd) {
-        onSongEnd({ controller: { startVideo } });
+        onSongEnd({ controller: { startVideo, stopVideo } });
       }
     };
-  }, [onSongEnd, startVideo]);
+  }, [onSongEnd, startVideo, stopVideo]);
 
   const Player = (
     <div

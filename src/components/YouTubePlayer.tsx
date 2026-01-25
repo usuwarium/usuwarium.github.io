@@ -27,11 +27,11 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
     playingSong,
     isRepeated,
     isShuffled,
-    play,
-    playAll,
-    playShuffled,
-    playBackward,
-    playForward,
+    resetQueue,
+    queueAll,
+    queueShuffled,
+    prevSong,
+    nextSong,
     clearQueue,
     toggleShuffle,
     toggleRepeat,
@@ -40,12 +40,17 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
   // 曲終了時のハンドラー
   const handleSongEnd = useCallback(
     (event: SongEndEvent) => {
-      const nextSong = playForward();
-      if (nextSong) {
-        event.controller.startVideo(nextSong.video_id, nextSong.start_time, nextSong.end_time);
+      const next = nextSong();
+      if (next) {
+        event.controller.startVideo(next.video_id, next.start_time, next.end_time);
+        onSongChanged(next);
+      } else {
+        clearQueue();
+        event.controller.stopVideo();
+        onSongChanged(undefined);
       }
     },
-    [playForward],
+    [nextSong, clearQueue, onSongChanged],
   );
 
   const {
@@ -66,46 +71,55 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
     changeVolume,
     toggleMute,
     setIsVisible,
-    isReady,
     Player,
   } = useYouTubePlayer({ width: 320, height: 180, onSongEnd: handleSongEnd });
-
-  // YouTube Player で曲を再生する
-  const playSong = useCallback(
-    (playingSongId: SongId) => {
-      if (!isReady()) return;
-      const playingSong = songs.find((s) => s.song_id === playingSongId);
-      if (playingSong) {
-        startVideo(playingSong.video_id, playingSong.start_time, playingSong.end_time);
-      }
-    },
-    [isReady, songs, startVideo],
-  );
 
   // 外部に公開する操作メソッド
   useImperativeHandle(
     ref,
     () => ({
       isVisible: () => isVisible,
-      playSong: (playingSongId: SongId) => {
-        play(playingSongId);
-        const playingSong = songs.find((s) => s.song_id === playingSongId);
-        if (playingSong) {
-          startVideo(playingSong.video_id, playingSong.start_time, playingSong.end_time);
+      playSong: (songId: SongId) => {
+        const song = songs.find((s) => s.song_id === songId);
+        if (!song) {
+          console.error(`Song with ID ${songId} not found.`);
+          return;
         }
+        resetQueue(song);
+        startVideo(song.video_id, song.start_time, song.end_time);
+        onSongChanged(song);
       },
       playAll: () => {
-        playSong(playAll().song_id);
+        const song = queueAll();
+        if (song) {
+          startVideo(song.video_id, song.start_time, song.end_time);
+        }
+        onSongChanged(song);
       },
       playShuffled: () => {
-        playSong(playShuffled().song_id);
+        const song = queueShuffled();
+        if (song) {
+          startVideo(song.video_id, song.start_time, song.end_time);
+        }
+        onSongChanged(song);
       },
       close: () => {
-        clearQueue();
         stopVideo();
+        clearQueue();
+        onSongChanged(undefined);
       },
     }),
-    [songs, isVisible, startVideo, play, playAll, playShuffled, stopVideo, clearQueue, playSong],
+    [
+      songs,
+      isVisible,
+      startVideo,
+      resetQueue,
+      queueAll,
+      queueShuffled,
+      stopVideo,
+      clearQueue,
+      onSongChanged,
+    ],
   );
 
   const seekbarRef = useRef<HTMLInputElement>(null);
@@ -123,27 +137,31 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
     };
   }, [seekTo]);
 
-  useEffect(() => {
-    onSongChanged(playingSong);
-  }, [playingSong, onSongChanged]);
-
   // 前の曲を再生
   const handlePlayBackward = () => {
-    // 再生時間が 5 秒以上なら曲の先頭に戻り、5 秒未満なら前の曲へ
+    // 前の曲がないか再生時間が 5 秒以上なら曲の先頭に戻り、5 秒未満なら前の曲へ
     if (currentTime - startTime >= 5) {
       seekTo(startTime);
     } else {
-      const prevSong = playBackward();
-      if (!prevSong) return;
-      playSong(prevSong.song_id);
+      const prev = prevSong();
+      if (prev) {
+        startVideo(prev.video_id, prev.start_time, prev.end_time);
+      }
+      onSongChanged(prev);
     }
   };
 
   // 次の曲を再生
   const handlePlayForward = () => {
-    const nextSong = playForward();
-    if (!nextSong) return;
-    playSong(nextSong.song_id);
+    const next = nextSong();
+    if (next) {
+      startVideo(next.video_id, next.start_time, next.end_time);
+      onSongChanged(next);
+    } else {
+      stopVideo();
+      clearQueue();
+      onSongChanged(undefined);
+    }
   };
 
   const handlePlayPause = () => {
@@ -169,6 +187,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
   const handleClose = () => {
     clearQueue();
     stopVideo();
+    onSongChanged(undefined);
   };
 
   const actualEndTime = endTime || duration;
