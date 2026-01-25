@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { applySearchQuery, matchesQuickFilter } from "@/lib/filter";
 import type { Video } from "@/lib/types";
-import { useContext, useEffect, useState } from "react";
-import { FetchDataContext } from "./useFetchData";
+import useSWR from "swr";
 
 export interface QueryVideosParams {
   searchQuery?: string;
@@ -17,6 +16,7 @@ export interface UseQueryVideosResult {
   videos: Video[];
   totalCount: number;
   loading: boolean;
+  isValidating: boolean;
   error: string | null;
 }
 
@@ -75,53 +75,34 @@ async function queryVideos(params: {
 }
 
 export function useQueryVideos(params: QueryVideosParams): UseQueryVideosResult {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { loading: fetchDataLoading } = useContext(FetchDataContext);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (fetchDataLoading) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { videos: fetchedVideos, count } = await queryVideos({
-          searchQuery: params.searchQuery,
-          selectedFilter: params.selectedFilter,
-          sortBy: params.sortBy,
-          sortOrder: params.sortOrder,
-          page: params.page,
-          itemsPerPage: params.itemsPerPage,
-        });
-        setVideos(fetchedVideos);
-        setTotalCount(count);
-      } catch (err) {
-        console.error(err);
-        setError("データの取得に失敗しました");
-      } finally {
-        setLoading(false);
+  const lastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+  const { data: syncStatus, isLoading: isSyncLoading } = useSWR("usuwarium-db");
+  const { data, isLoading, isValidating, error } = useSWR(
+    ["queryVideos", syncStatus?.updatedAt, params],
+    async () => {
+      if (lastUpdatedAt === null && !syncStatus) {
+        return undefined;
       }
-    };
+      return await queryVideos(params);
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      keepPreviousData: true,
+    },
+  );
 
-    fetchData();
-  }, [
-    params.searchQuery,
-    params.selectedFilter,
-    params.sortBy,
-    params.sortOrder,
-    params.page,
-    params.itemsPerPage,
-    fetchDataLoading,
-  ]);
+  const isInitialLoading = lastUpdatedAt === null && (isSyncLoading || !syncStatus);
+
+  if (error) {
+    console.error("useQueryVideos error:", error);
+  }
 
   return {
-    videos,
-    totalCount,
-    loading: loading || fetchDataLoading,
-    error,
+    videos: data?.videos ?? [],
+    totalCount: data?.count ?? 0,
+    loading: isInitialLoading || (isLoading && !data),
+    isValidating,
+    error: error ? "データの取得に失敗しました" : null,
   };
 }

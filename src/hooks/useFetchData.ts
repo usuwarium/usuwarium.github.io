@@ -1,20 +1,24 @@
 import { db } from "@/lib/db";
 import type { Song, Video, VideoId } from "@/lib/types";
 import Papa from "papaparse";
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "react";
+import useSWR from "swr";
 import { config } from "../../config";
 
 const REFRESH_INTERVAL = config.refresh.interval;
 
 interface FetchDataContextProps {
+  isDataStored: boolean;
   loading: boolean;
 }
 
 export const FetchDataContext = createContext<FetchDataContextProps>({
+  isDataStored: false,
   loading: true,
 });
 
 export interface UseFetchDataResult {
+  isDataStored: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -82,7 +86,7 @@ async function fetchLastUpdatedAt(): Promise<string> {
  *
  * @returns {Promise<void>} データ同期処理が完了したときに解決される Promise。
  */
-async function performDataFetch(serverLastUpdatedAt: string): Promise<void> {
+async function performDataFetch(): Promise<void> {
   try {
     // 動画データを取得
     const videosRaw = await fetchSheet(
@@ -178,14 +182,13 @@ async function performDataFetch(serverLastUpdatedAt: string): Promise<void> {
         };
       });
 
-    await db.videos.clear();
-    await db.videos.bulkPut(videosData);
+    await db.transaction("rw", db.videos, db.songs, async () => {
+      await db.videos.clear();
+      await db.videos.bulkPut(videosData);
 
-    await db.songs.clear();
-    await db.songs.bulkPut(songsData);
-
-    // サーバー側のlast_updated_atを保存
-    localStorage.setItem("lastUpdatedAt", serverLastUpdatedAt);
+      await db.songs.clear();
+      await db.songs.bulkPut(songsData);
+    });
   } catch (error) {
     console.error("データ同期エラー:", error);
     // 古いキャッシュがあるかチェック
@@ -198,46 +201,30 @@ async function performDataFetch(serverLastUpdatedAt: string): Promise<void> {
   }
 }
 
-let fetchingPromise: Promise<void> | null = null;
+const fetcher = async () => {
+  const localLastUpdatedAt = localStorage.getItem("lastUpdatedAt");
+  const serverLastUpdatedAt = await fetchLastUpdatedAt();
+  if (serverLastUpdatedAt !== localLastUpdatedAt) {
+    await performDataFetch();
+    localStorage.setItem("lastUpdatedAt", serverLastUpdatedAt);
+  }
+  return { updatedAt: serverLastUpdatedAt };
+};
 
 /**
  * Google Spreadsheet からデータ CSV をダウンロードして IndexedDB に保存するカスタムフック
  * 定期的にバックグラウンドで最新データをダウンロードする
  */
 export function useFetchData(): UseFetchDataResult {
-  const [isDataStored, setIsDataStored] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { isLoading, error } = useSWR("usuwarium-db", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnMount: true,
+    refreshInterval: REFRESH_INTERVAL,
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (fetchingPromise) return;
-      setLoading(true);
-      try {
-        setError(null);
-        const localLastUpdatedAt = localStorage.getItem("lastUpdatedAt");
-        const serverLastUpdatedAt = await fetchLastUpdatedAt();
-        if (serverLastUpdatedAt !== localLastUpdatedAt) {
-          fetchingPromise = performDataFetch(serverLastUpdatedAt);
-          await fetchingPromise;
-        }
-      } catch (err) {
-        console.error(err);
-        setError("データの取得に失敗しました");
-      } finally {
-        setLoading(false);
-        setIsDataStored(true);
-        fetchingPromise = null;
-      }
-    };
-
-    fetchData();
-
-    // 定期的にデータを取得
-    const id = setInterval(fetchData, REFRESH_INTERVAL);
-    return () => clearInterval(id);
-  }, []);
-
-  // IndexedDB にデータがあればローディングは表示しなくて良い
-  return { loading: !isDataStored && loading, error };
+  return {
+    isDataStored: true,
+    loading: isLoading,
+    error: error ? "データの取得に失敗しました" : null,
+  };
 }

@@ -16,7 +16,7 @@ import { ManageAuthPage } from "./pages/ManageAuthPage";
 import { useEffect } from "react";
 
 function App() {
-  const { loading, error } = useFetchData();
+  const { isDataStored, loading, error } = useFetchData();
 
   // 管理画面認証状態の判定
   const storedKey = localStorage.getItem(YOUTUBE_API_KEY);
@@ -36,7 +36,7 @@ function App() {
   }, [error]);
 
   return (
-    <FetchDataContext.Provider value={{ loading }}>
+    <FetchDataContext.Provider value={{ isDataStored, loading }}>
       <Toaster position="top-right" />
       <Routes>
         <Route path="/manage" element={authenticated ? <ManagePage /> : <ManageAuthPage />} />
