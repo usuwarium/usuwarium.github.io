@@ -38,61 +38,6 @@ export class VideoClassifier {
   }
 
   /**
-   * コメントからタイムスタンプ情報を抽出
-   */
-  static extractTimestampsFromComments(
-    comments: YouTubeComment[],
-    video: YouTubeVideo,
-  ): Omit<TimestampInfo, "song_id">[] {
-    const timestamps: Omit<TimestampInfo, "song_id">[] = [];
-
-    for (const comment of comments) {
-      const text = comment.snippet.topLevelComment.snippet.textOriginal;
-      const lines = text.split("\n");
-
-      for (const line of lines) {
-        // MM:SS または H:MM:SS の後に曲名がある形式を検索
-        // 例: "0:00 曲名 / アーティスト"
-        const pattern = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(.+?)(?:\s*[/／]\s*(.+))?$/;
-        const match = line.match(pattern);
-
-        if (match) {
-          let seconds = 0;
-          if (match[3]) {
-            // H:MM:SS
-            seconds = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3]);
-          } else {
-            // MM:SS
-            seconds = parseInt(match[1]) * 60 + parseInt(match[2]);
-          }
-
-          const songTitle = match[4]?.trim() || "不明";
-          const artist = match[5]?.trim() || "不明";
-
-          timestamps.push({
-            video_id: video.id,
-            video_title: video.snippet.title,
-            video_published_at: video.snippet.publishedAt,
-            title: songTitle,
-            artist: artist,
-            start_time: seconds,
-          });
-        }
-      }
-    }
-
-    // start_time でソート
-    timestamps.sort((a, b) => a.start_time - b.start_time);
-
-    // end_time を次のタイムスタンプの start_time に設定
-    for (let i = 0; i < timestamps.length - 1; i++) {
-      timestamps[i].end_time = timestamps[i + 1].start_time;
-    }
-
-    return timestamps;
-  }
-
-  /**
    * ISO 8601 形式の期間文字列を秒に変換
    * 例：PT1H30M45S → 5445
    */

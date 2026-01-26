@@ -12,13 +12,13 @@ export interface UseVideosResult {
   error: string | null;
 }
 
-export function useManageData(): UseVideosResult {
+export function useManageData(showNonSinging = false): UseVideosResult {
   const [videos, setVideos] = useState<Video[]>([]);
   const [songs, setSongs] = useState<Song[]>([]);
   const [artists, setArtists] = useState<string[]>([]);
   const [titles, setTitles] = useState<string[]>([]);
 
-  const [reloadtrigger, setReloadTrigger] = useState(0);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export function useManageData(): UseVideosResult {
       setError(null);
       try {
         const [videos, songs] = await getVideosAndSongs();
-        setVideos(videos.filter((v) => v.available && v.singing));
+        setVideos(videos.filter((v) => v.available && (showNonSinging || v.singing)));
         setSongs(
           songs.map((song) => {
             // 作業途中でタイトルやアーティストが空の場合 undefined になることがあるためパッチ
@@ -62,7 +62,7 @@ export function useManageData(): UseVideosResult {
     };
 
     fetchData();
-  }, [reloadtrigger]);
+  }, [reloadTrigger, showNonSinging]);
 
   return { videos, songs, artists, titles, reload, loading, error };
 }
