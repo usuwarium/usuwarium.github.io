@@ -21,7 +21,7 @@ export class UsuwariumDB extends Dexie {
       videos: "&video_id, published_at, like_count, view_count",
       songs: "&song_id, video_id, video_published_at, artist, title, start_time",
       playlists: "&id, name, created_at, updated_at",
-      playlistItems: "[playlist_id+song_id], order",
+      playlistItems: "[playlist_id+song_id], order, volumeOffset, startTimeOffset, endTimeOffset",
     });
   }
 }
