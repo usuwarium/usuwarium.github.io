@@ -33,9 +33,7 @@ export function ManageAuthPage() {
         <h1 className="text-2xl font-bold text-center mb-6">管理ページ</h1>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">
-              YouTube API キー
-            </label>
+            <label className="block text-sm font-medium mb-2">YouTube API キー</label>
             <input
               type="password"
               value={apiKey}
@@ -45,9 +43,7 @@ export function ManageAuthPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">
-              GAS API キー
-            </label>
+            <label className="block text-sm font-medium mb-2">GAS API キー</label>
             <input
               type="password"
               value={gasApiKey}

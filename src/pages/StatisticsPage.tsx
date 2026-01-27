@@ -13,7 +13,7 @@ interface OptionType {
 
 type ViewMode = "song" | "artist";
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 100;
 
 export function StatisticsPage() {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -187,146 +187,138 @@ export function StatisticsPage() {
   }
 
   return (
-    <>
-      <main className="main flex-1">
-        <header className="header">
-          <h1 className="mb-2 text-xl md:text-4xl">Statistics</h1>
+    <main className="main flex-1">
+      <header className="header margin">
+        <h1 className="mb-2 text-xl md:text-4xl">Statistics</h1>
 
-          {/* フィルターエリア */}
-          <section className="statistics-filters">
-            <label className="filter-mode">表示モード</label>
-            <div className="filter-mode-field flex gap-2">
-              <button
-                onClick={() => {
-                  setViewMode("song");
-                  handleFilterChange();
-                }}
-                className={`flex-1 btn ${viewMode === "song" && "btn-primary"}`}
-              >
-                曲別
-              </button>
-              <button
-                onClick={() => {
-                  setViewMode("artist");
-                  handleFilterChange();
-                }}
-                className={`flex-1 btn ${viewMode === "artist" && "btn-primary"}`}
-              >
-                アーティスト別
-              </button>
-            </div>
-
-            {/* アーティストフィルター */}
-            <label className="artist">アーティスト</label>
-            <Select<OptionType>
-              className="select-box artist-field"
-              classNamePrefix="Select"
-              value={artistOptions.find((opt) => opt.value === selectedArtist)}
-              onChange={(option) => {
-                setSelectedArtist(option?.value || "");
+        {/* フィルターエリア */}
+        <section className="statistics-filters">
+          <label className="filter-mode">表示モード</label>
+          <div className="filter-mode-field flex gap-2">
+            <button
+              onClick={() => {
+                setViewMode("song");
                 handleFilterChange();
               }}
-              options={artistOptions}
-              placeholder="選択..."
-              isClearable
-            />
-
-            {/* タイトル検索 */}
-            <label className="title">タイトル</label>
-            <Select<OptionType>
-              className="select-box title-field"
-              classNamePrefix="Select"
-              value={titleOptions.find((opt) => opt.value === searchTitle)}
-              onChange={(option) => {
-                setSearchTitle(option?.value || "");
+              className={`flex-1 btn ${viewMode === "song" && "btn-primary"}`}
+            >
+              曲別
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("artist");
                 handleFilterChange();
               }}
-              options={titleOptions}
-              placeholder="選択..."
+              className={`flex-1 btn ${viewMode === "artist" && "btn-primary"}`}
+            >
+              アーティスト別
+            </button>
+          </div>
+
+          {/* アーティストフィルター */}
+          <label className="artist">アーティスト</label>
+          <Select<OptionType>
+            className="select-box artist-field"
+            classNamePrefix="Select"
+            value={artistOptions.find((opt) => opt.value === selectedArtist)}
+            onChange={(option) => {
+              setSelectedArtist(option?.value || "");
+              handleFilterChange();
+            }}
+            options={artistOptions}
+            placeholder="選択..."
+            isClearable
+          />
+
+          {/* タイトル検索 */}
+          <label className="title">タイトル</label>
+          <Select<OptionType>
+            className="select-box title-field"
+            classNamePrefix="Select"
+            value={titleOptions.find((opt) => opt.value === searchTitle)}
+            onChange={(option) => {
+              setSearchTitle(option?.value || "");
+              handleFilterChange();
+            }}
+            options={titleOptions}
+            placeholder="選択..."
+            isClearable
+          />
+        </section>
+
+        {/* 期間指定 */}
+        <section>
+          <label className="block mb-1">期間</label>
+          <div className="grid grid-cols-[1fr_1fr_auto] md:grid-cols-[1fr_1fr_auto_1fr_1fr] gap-2 mb-3">
+            <Select<OptionType>
+              className="select-box flex-1"
+              classNamePrefix="Select"
+              value={yearOptions.find((opt) => opt.value === startYear)}
+              onChange={(option) => {
+                setStartYear(option?.value || "");
+                handleFilterChange();
+              }}
+              options={yearOptions}
+              placeholder="年"
               isClearable
             />
-          </section>
+            <Select<OptionType>
+              className="select-box flex-1"
+              classNamePrefix="Select"
+              value={monthOptions.find((opt) => opt.value === startMonth)}
+              onChange={(option) => {
+                setStartMonth(option?.value || "");
+                handleFilterChange();
+              }}
+              options={monthOptions}
+              placeholder="月"
+              isClearable
+            />
+            <div className="leading-8.5">～</div>
+            <Select<OptionType>
+              className="select-box flex-1"
+              classNamePrefix="Select"
+              value={yearOptions.find((opt) => opt.value === endYear)}
+              onChange={(option) => {
+                setEndYear(option?.value || "");
+                handleFilterChange();
+              }}
+              options={yearOptions}
+              placeholder="年"
+              isClearable
+            />
+            <Select<OptionType>
+              className="select-box flex-1"
+              classNamePrefix="Select"
+              value={monthOptions.find((opt) => opt.value === endMonth)}
+              onChange={(option) => {
+                setEndMonth(option?.value || "");
+                handleFilterChange();
+              }}
+              options={monthOptions}
+              placeholder="月"
+              isClearable
+            />
+          </div>
+        </section>
 
-          {/* 期間指定 */}
-          <section>
-            <label className="block mb-1">期間</label>
-            <div className="grid grid-cols-[1fr_1fr_auto] md:grid-cols-[1fr_1fr_auto_1fr_1fr] gap-2 mb-3">
-              <Select<OptionType>
-                className="select-box flex-1"
-                classNamePrefix="Select"
-                value={yearOptions.find((opt) => opt.value === startYear)}
-                onChange={(option) => {
-                  setStartYear(option?.value || "");
-                  handleFilterChange();
-                }}
-                options={yearOptions}
-                placeholder="年"
-                isClearable
-              />
-              <Select<OptionType>
-                className="select-box flex-1"
-                classNamePrefix="Select"
-                value={monthOptions.find((opt) => opt.value === startMonth)}
-                onChange={(option) => {
-                  setStartMonth(option?.value || "");
-                  handleFilterChange();
-                }}
-                options={monthOptions}
-                placeholder="月"
-                isClearable
-              />
-              <div className="leading-8.5">～</div>
-              <Select<OptionType>
-                className="select-box flex-1"
-                classNamePrefix="Select"
-                value={yearOptions.find((opt) => opt.value === endYear)}
-                onChange={(option) => {
-                  setEndYear(option?.value || "");
-                  handleFilterChange();
-                }}
-                options={yearOptions}
-                placeholder="年"
-                isClearable
-              />
-              <Select<OptionType>
-                className="select-box flex-1"
-                classNamePrefix="Select"
-                value={monthOptions.find((opt) => opt.value === endMonth)}
-                onChange={(option) => {
-                  setEndMonth(option?.value || "");
-                  handleFilterChange();
-                }}
-                options={monthOptions}
-                placeholder="月"
-                isClearable
-              />
+        {/* 統計情報 */}
+        <section className="p-2 bg-gray-700 rounded-lg flex flex-row gap-4 md:gap-10 justify-center">
+          <div className="w-30 flex flex-col justify-center items-center">
+            <div className="text-2xl font-bold text-blue-400">{filteredSongs.length}</div>
+            <div className="text-sm text-gray-400">総歌唱数</div>
+          </div>
+          <div className="w-30 flex flex-col justify-center items-center">
+            <div className="text-2xl font-bold text-green-400">{allStats.length}</div>
+            <div className="text-sm text-gray-400">
+              {viewMode === "song" ? "ユニーク曲数" : "アーティスト数"}
             </div>
-          </section>
+          </div>
+        </section>
+      </header>
 
-          {/* 統計情報 */}
-          <section className="p-2 bg-gray-700 rounded-lg text-center">
-            <div className="grid grid-cols-3">
-              <div>
-                <div className="text-2xl font-bold text-blue-400">{filteredSongs.length}</div>
-                <div className="text-sm text-gray-400">総曲数</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-400">{allStats.length}</div>
-                <div className="text-sm text-gray-400">
-                  {viewMode === "song" ? "ユニーク曲数" : "アーティスト数"}
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-400">
-                  {allStats.length > 0 ? allStats[0].count : 0}
-                </div>
-                <div className="text-sm text-gray-400">最多カウント</div>
-              </div>
-            </div>
-          </section>
-        </header>
-
-        <div className="content w-full px-2 md:px-8" ref={contentRef}>
+      <div className="content-wrapper" ref={contentRef}>
+        <div className="content margin px-2 md:px-8">
           {/* データテーブル */}
           {loading ? (
             <div className="text-center py-8">
@@ -334,10 +326,10 @@ export function StatisticsPage() {
             </div>
           ) : (
             <section className="bg-gray-800 rounded-lg overflow-hidden">
-              <table className="w-full">
+              <table className="table-fixed w-full">
                 <thead className="bg-gray-700 text-gray-300 text-sm uppercase">
                   <tr>
-                    <th className="p-2 text-right w-10 md:w-20">＃</th>
+                    <th className="p-2 text-right w-10 md:w-14">#</th>
                     {viewMode === "song" ? (
                       <>
                         <th className="p-2 text-left">曲名</th>
@@ -346,15 +338,14 @@ export function StatisticsPage() {
                     ) : (
                       <th className="p-2 text-left">アーティスト</th>
                     )}
-                    <th className="p-2 text-right w-18 md:w-32">カウント</th>
-                    <th className="p-2 text-left hidden md:table-cell">グラフ</th>
+                    <th className="p-2 text-right w-12 md:w-32">累計</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedStats.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={viewMode === "song" ? 5 : 4}
+                        colSpan={viewMode === "song" ? 4 : 3}
                         className="px-4 py-8 text-center text-gray-400"
                       >
                         データがありません
@@ -362,8 +353,6 @@ export function StatisticsPage() {
                     </tr>
                   ) : (
                     paginatedStats.map((stat, index) => {
-                      const maxCount = allStats[0].count;
-                      const percentage = (stat.count / maxCount) * 100;
                       const actualRank = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                       const isExpanded = viewMode === "artist" && expandedArtists.has(stat.artist);
                       const artistSongs = isExpanded ? getArtistSongs(stat.artist) : [];
@@ -377,7 +366,7 @@ export function StatisticsPage() {
                             {viewMode === "song" ? (
                               <>
                                 <td className="p-2 font-medium">{stat.title}</td>
-                                <td className="p-2 text-gray-400">{stat.artist}</td>
+                                <td className="p-2 text-gray-400 w-1/4">{stat.artist}</td>
                               </>
                             ) : (
                               <td className="p-2">
@@ -391,34 +380,17 @@ export function StatisticsPage() {
                               </td>
                             )}
                             <td className="p-2 text-right font-bold text-blue-400">{stat.count}</td>
-                            <td className="p-2 hidden md:table-cell">
-                              <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                                <div
-                                  className="bg-blue-500 h-full rounded-full transition-all"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                            </td>
                           </tr>
 
                           {/* アーティスト別表示時の展開された曲リスト */}
                           {isExpanded &&
                             artistSongs.map((song) => {
-                              const songPercentage = (song.count / stat.count) * 100;
                               return (
                                 <tr key={`${song.artist}-${song.title}`} className="bg-gray-700/30">
                                   <td className="p-2 text-gray-500 text-sm"></td>
                                   <td className="p-2 text-sm pl-12">{song.title}</td>
                                   <td className="p-2 text-right text-sm text-gray-400">
                                     {song.count}
-                                  </td>
-                                  <td className="p-2 hidden md:table-cell">
-                                    <div className="w-full bg-gray-600 rounded-full h-3 overflow-hidden">
-                                      <div
-                                        className="bg-green-500 h-full rounded-full transition-all"
-                                        style={{ width: `${songPercentage}%` }}
-                                      />
-                                    </div>
                                   </td>
                                 </tr>
                               );
@@ -432,9 +404,9 @@ export function StatisticsPage() {
             </section>
           )}
         </div>
-      </main>
+      </div>
 
-      <footer className="footer bg-gray-800 border-t border-gray-700">
+      <footer className="footer">
         {totalPages > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -444,6 +416,6 @@ export function StatisticsPage() {
           />
         )}
       </footer>
-    </>
+    </main>
   );
 }

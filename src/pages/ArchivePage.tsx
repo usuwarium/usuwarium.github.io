@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Video } from "@/lib/types";
 import { useQueryVideos } from "@/hooks/useQueryVideos";
 import { VideoGallery } from "@/components/VideoGallery";
@@ -147,86 +147,82 @@ export function ArchivePage() {
   }
 
   return (
-    <>
-      <main className="main">
-        <header className="header">
-          <h1 className="text-xl md:text-4xl">Archives</h1>
-          {/* クイックフィルタ */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-            <section className="flex flex-wrap">
-              {QUICK_FILTER_ITEMS.map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() =>
-                    handleFilterChange(navigation.selectedFilter === filter.key ? null : filter.key)
-                  }
-                  className={`quick-filter-btn ${
-                    filter.hideOnMobile ? "hidden md:inline-block" : ""
-                  } ${navigation.selectedFilter === filter.key ? "quick-filter-btn-active" : ""}`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </section>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2 mb-1.5">
-            <section>
-              <SearchInput
-                id="search"
-                type="text"
-                placeholder="動画を検索..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-              />
-            </section>
-
-            {/* ソート選択 */}
-            <section className="sort-btn-group ml-auto">
+    <main className="main">
+      <header className="header">
+        <h1 className="text-xl md:text-4xl">Archives</h1>
+        {/* クイックフィルタ */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+          <section className="flex flex-wrap">
+            {QUICK_FILTER_ITEMS.map((filter) => (
               <button
-                onClick={() => handleSortToggle("published_at")}
-                className={`sort-btn ${
-                  navigation.sortBy === "published_at" ? "sort-btn-active" : ""
-                }`}
+                key={filter.key}
+                onClick={() =>
+                  handleFilterChange(navigation.selectedFilter === filter.key ? null : filter.key)
+                }
+                className={`quick-filter-btn ${
+                  filter.hideOnMobile ? "hidden md:inline-block" : ""
+                } ${navigation.selectedFilter === filter.key ? "quick-filter-btn-active" : ""}`}
               >
-                投稿日時
-                <SortIcon
-                  state={navigation.sortBy === "published_at" ? navigation.sortOrder : "none"}
-                />
+                {filter.label}
               </button>
-              <button
-                onClick={() => handleSortToggle("like_count")}
-                className={`sort-btn ${
-                  navigation.sortBy === "like_count" ? "sort-btn-active" : ""
-                }`}
-              >
-                高評価数
-                <SortIcon
-                  state={navigation.sortBy === "like_count" ? navigation.sortOrder : "none"}
-                />
-              </button>
-              <button
-                onClick={() => handleSortToggle("view_count")}
-                className={`sort-btn ${
-                  navigation.sortBy === "view_count" ? "sort-btn-active" : ""
-                }`}
-              >
-                再生数
-                <SortIcon
-                  state={navigation.sortBy === "view_count" ? navigation.sortOrder : "none"}
-                />
-              </button>
-            </section>
-          </div>
-
-          <section>
-            検索結果：&nbsp;
-            <span className="font-bold text-blue-400">{totalCount}</span>
-            &nbsp;件
+            ))}
           </section>
-        </header>
+        </div>
 
-        <div className="content px-2 md:px-8" ref={contentRef}>
+        <div className="flex flex-col md:flex-row gap-2 mb-1.5">
+          <section>
+            <SearchInput
+              id="search"
+              type="text"
+              placeholder="動画を検索..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </section>
+
+          {/* ソート選択 */}
+          <section className="sort-btn-group ml-auto">
+            <button
+              onClick={() => handleSortToggle("published_at")}
+              className={`sort-btn ${
+                navigation.sortBy === "published_at" ? "sort-btn-active" : ""
+              }`}
+            >
+              投稿日時
+              <SortIcon
+                state={navigation.sortBy === "published_at" ? navigation.sortOrder : "none"}
+              />
+            </button>
+            <button
+              onClick={() => handleSortToggle("like_count")}
+              className={`sort-btn ${navigation.sortBy === "like_count" ? "sort-btn-active" : ""}`}
+            >
+              高評価数
+              <SortIcon
+                state={navigation.sortBy === "like_count" ? navigation.sortOrder : "none"}
+              />
+            </button>
+            <button
+              onClick={() => handleSortToggle("view_count")}
+              className={`sort-btn ${navigation.sortBy === "view_count" ? "sort-btn-active" : ""}`}
+            >
+              再生数
+              <SortIcon
+                state={navigation.sortBy === "view_count" ? navigation.sortOrder : "none"}
+              />
+            </button>
+          </section>
+        </div>
+
+        <section>
+          検索結果：&nbsp;
+          <span className="font-bold text-blue-400">{totalCount}</span>
+          &nbsp;件
+        </section>
+      </header>
+
+      <div className="content-wrapper" ref={contentRef}>
+        <div className="content px-2 md:px-8">
           <section>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -243,12 +239,9 @@ export function ArchivePage() {
             )}
           </section>
         </div>
+      </div>
 
-        {selectedVideo && (
-          <VideoModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
-        )}
-      </main>
-
+      {selectedVideo && <VideoModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />}
       <footer className="footer">
         {totalPages > 0 && (
           <Pagination
@@ -259,6 +252,6 @@ export function ArchivePage() {
           />
         )}
       </footer>
-    </>
+    </main>
   );
 }

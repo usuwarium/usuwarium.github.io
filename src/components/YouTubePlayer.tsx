@@ -200,13 +200,13 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
   return (
     <>
       {/* YouTubeプレイヤー（フッターの上にフローティング） */}
-      <div className="absolute top-[-182px] left-[50%] md:right-3 z-50 flex justify-center md:justify-end transform-[translate(-50%,0)] md:transform-none m-h-[180px] rounded-lg overflow-hidden shadow-2xl transition-all">
+      <div className="absolute top-[-182px] left-[50%] md:left-auto md:right-3 z-50 flex justify-center md:justify-end transform-[translate(-50%,0)] md:transform-none min-h-[180px] rounded-lg overflow-hidden shadow-2xl transition-all">
         <div className={`${videoId ? "" : "hidden"}`}>{Player}</div>
       </div>
 
       {/* コントローラー（親コンポーネントで配置） */}
       <div
-        className={`w-full bg-gray-800 border-t border-gray-700 px-2 md:p-3 shadow-2xl ${
+        className={`w-full bg-gray-800 border-t border-gray-700 px-2 pb-2 md:p-3 shadow-2xl ${
           videoId ? "" : "hidden"
         }`}
       >
@@ -231,7 +231,7 @@ export function YouTubePlayer({ ref, songs, onSongChanged }: YouTubePlayerProps)
         {/* タイトル/アーティスト、コントローラー */}
         <div className="grid grid-cols-[1fr_auto] grid-rows-[auto_auto] [grid-template-areas:'title_repeat''control_control'] gap-1 md:gap-2">
           {/* タイトル/アーティスト */}
-          <div className="[grid-area:title]">
+          <div className="[grid-area:title] truncate">
             <div className="text-sm text-white truncate">{playingSong?.title || "Unknown"}</div>
             <div className="text-xs text-gray-400 truncate">{playingSong?.artist || "Unknown"}</div>
           </div>

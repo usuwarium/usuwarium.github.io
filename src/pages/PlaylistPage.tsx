@@ -245,75 +245,75 @@ export function PlaylistPage() {
   const selectedPlaylistName = playlists.find((p) => p.id === selectedPlaylistId)?.name || "";
 
   return (
-    <>
-      <main className="main">
-        <header className="header">
-          <h1 className="text-xl md:text-4xl">Playlists</h1>
+    <main className="main">
+      <header className="header">
+        <h1 className="text-xl md:text-4xl">Playlists</h1>
 
-          <section
-            className={`relative justify-between mt-3 mb-3 ${
-              selectedPlaylistId ? "hidden" : "flex"
-            } md:flex`}
-          >
-            <button onClick={() => setIsCreating(true)} className="btn btn-primary">
-              <FaPlus /> 新規作成
+        <section
+          className={`relative justify-between mt-3 mb-3 ${
+            selectedPlaylistId ? "hidden" : "flex"
+          } md:flex`}
+        >
+          <button onClick={() => setIsCreating(true)} className="btn btn-primary">
+            <FaPlus /> 新規作成
+          </button>
+          <div className="flex gap-2" ref={dropdownRef}>
+            <button
+              className="btn block md:hidden"
+              onClick={() => setIsOptionMenuOpen(!isOptionMenuOpen)}
+            >
+              <BsThreeDots size={24} />
             </button>
-            <div className="flex gap-2" ref={dropdownRef}>
-              <button
-                className="btn block md:hidden"
-                onClick={() => setIsOptionMenuOpen(!isOptionMenuOpen)}
-              >
-                <BsThreeDots size={24} />
+            <div
+              className={`absolute right-0 top-full flex flex-col md:flex-row bg-gray-700 rounded shadow p-2 gap-2 ${
+                isOptionMenuOpen ? "" : " hidden"
+              }`}
+            >
+              <button onClick={handleExport} className="btn">
+                <FaDownload /> エクスポート
               </button>
-              <div
-                className={`absolute right-0 top-full flex flex-col md:flex-row bg-gray-700 rounded shadow p-2 gap-2 ${
-                  isOptionMenuOpen ? "" : " hidden"
-                }`}
+              <button onClick={handleImport} className="btn">
+                <FaUpload /> インポート
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {isCreating && (
+          <section
+            className={`mb-6 p-4 bg-gray-800 rounded-lg ${
+              selectedPlaylistId ? "hidden" : "block"
+            } md:block`}
+          >
+            <h3 className="text-lg mb-3">新規プレイリスト</h3>
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="text"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreatePlaylist()}
+                placeholder="プレイリスト名"
+                className="flex-1 input-text"
+                autoFocus
+              />
+              <button onClick={handleCreatePlaylist} className="px-4 py-2 btn btn-primary">
+                作成
+              </button>
+              <button
+                onClick={() => {
+                  setIsCreating(false);
+                  setNewPlaylistName("");
+                }}
+                className="px-4 py-2 btn"
               >
-                <button onClick={handleExport} className="btn">
-                  <FaDownload /> エクスポート
-                </button>
-                <button onClick={handleImport} className="btn">
-                  <FaUpload /> インポート
-                </button>
-              </div>
+                <FaTimesCircle /> キャンセル
+              </button>
             </div>
           </section>
+        )}
+      </header>
 
-          {isCreating && (
-            <section
-              className={`mb-6 p-4 bg-gray-800 rounded-lg ${
-                selectedPlaylistId ? "hidden" : "block"
-              } md:block`}
-            >
-              <h3 className="text-lg mb-3">新規プレイリスト</h3>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  type="text"
-                  value={newPlaylistName}
-                  onChange={(e) => setNewPlaylistName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreatePlaylist()}
-                  placeholder="プレイリスト名"
-                  className="flex-1 input-text"
-                  autoFocus
-                />
-                <button onClick={handleCreatePlaylist} className="px-4 py-2 btn btn-primary">
-                  作成
-                </button>
-                <button
-                  onClick={() => {
-                    setIsCreating(false);
-                    setNewPlaylistName("");
-                  }}
-                  className="px-4 py-2 btn"
-                >
-                  <FaTimesCircle /> キャンセル
-                </button>
-              </div>
-            </section>
-          )}
-        </header>
-
+      <div className="content-wrapper">
         <div className="content pl-2 pr-1 md:pl-8 md:pr-6 scrollbar-stable">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-3 md:gap-6 h-full">
             {/* プレイリスト一覧 */}
@@ -478,9 +478,9 @@ export function PlaylistPage() {
             </section>
           </div>
         </div>
-      </main>
+      </div>
 
-      <footer className="footer relative bg-gray-800 border-t border-gray-700 flex flex-col">
+      <footer className="footer border-none">
         {/* YouTubeプレイヤーコントローラー */}
         <YouTubePlayer
           ref={youtubePlayerRef}
@@ -489,6 +489,6 @@ export function PlaylistPage() {
         />
       </footer>
       <ConfirmDialog.Root />
-    </>
+    </main>
   );
 }
