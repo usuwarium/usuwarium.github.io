@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Video } from "@/lib/types";
 import { useQueryVideos } from "@/hooks/useQueryVideos";
 import { VideoGallery } from "@/components/VideoGallery";
@@ -109,9 +109,7 @@ export function ArchivePage() {
     updateURL(navigation);
   }, [navigation]);
 
-  const getTotalPages = (): number => {
-    return Math.ceil(totalCount / ITEMS_PER_PAGE);
-  };
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const handleSortToggle = (sortKey: "published_at" | "like_count" | "view_count") => {
     setNavigation((prev) => {
@@ -252,12 +250,14 @@ export function ArchivePage() {
       </main>
 
       <footer className="footer bg-gray-800 border-t border-gray-700">
-        <Pagination
-          currentPage={navigation.page}
-          totalPages={getTotalPages()}
-          onPageChange={handlePageChange}
-          scrollTargetRef={contentRef}
-        />
+        {totalPages > 0 && (
+          <Pagination
+            currentPage={navigation.page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            scrollTargetRef={contentRef}
+          />
+        )}
       </footer>
     </>
   );

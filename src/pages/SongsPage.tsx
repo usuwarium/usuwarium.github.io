@@ -483,12 +483,14 @@ export function SongsPage() {
 
         {/* ページネーション */}
         <div className="flex justify-center">
-          <Pagination
-            currentPage={navigation.page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            scrollTargetRef={contentRef}
-          />
+          {totalPages > 0 && (
+            <Pagination
+              currentPage={navigation.page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              scrollTargetRef={contentRef}
+            />
+          )}
         </div>
       </footer>
     </>

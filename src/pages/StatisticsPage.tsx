@@ -435,12 +435,14 @@ export function StatisticsPage() {
       </main>
 
       <footer className="footer bg-gray-800 border-t border-gray-700">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          scrollTargetRef={contentRef}
-        />
+        {totalPages > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            scrollTargetRef={contentRef}
+          />
+        )}
       </footer>
     </>
   );

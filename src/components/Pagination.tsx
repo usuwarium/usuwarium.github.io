@@ -1,10 +1,11 @@
-import { type RefObject } from "react";
+import { useRef, type RefObject } from "react";
+import { BsThreeDots } from "react-icons/bs";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  scrollTargetRef?: RefObject<HTMLElement>;
+  scrollTargetRef?: RefObject<HTMLElement | null>;
 }
 
 export const Pagination = ({
@@ -13,11 +14,20 @@ export const Pagination = ({
   onPageChange,
   scrollTargetRef,
 }: PaginationProps) => {
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
+
   const handlePageChange = (page: number) => {
-    if (scrollTargetRef?.current) {
-      scrollTargetRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
     onPageChange(page);
+    if (timerIdRef.current) {
+      clearTimeout(timerIdRef.current);
+      timerIdRef.current = null;
+    }
+    timerIdRef.current = setTimeout(() => {
+      if (scrollTargetRef?.current) {
+        scrollTargetRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      timerIdRef.current = null;
+    }, 100);
   };
 
   if (totalPages <= 0) {
@@ -25,32 +35,22 @@ export const Pagination = ({
   }
 
   const generatePageNumbers = (): (number | string)[] => {
-    const pages: (number | string)[] = [];
-    const delta = 2;
+    const maxSlots = 7; // 固定スロット数
+    const collapceThreshold = 4; // 省略記号を表示する最低ページ数(1ページ目+2ページ以上で省略)
 
-    pages.push(1);
-
-    if (currentPage - delta > 2) {
-      pages.push("...");
+    if (totalPages <= maxSlots) {
+      // 全ページ表示
+      return [...new Array(totalPages).keys()].map((_, i) => i + 1);
+    } else if (currentPage <= collapceThreshold) {
+      // 先頭付近
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    } else if (currentPage > totalPages - collapceThreshold) {
+      // 末尾付近
+      return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    } else {
+      // 中間
+      return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
     }
-
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
-      pages.push(i);
-    }
-
-    if (currentPage + delta < totalPages - 1) {
-      pages.push("...");
-    }
-
-    if (totalPages > 1) {
-      pages.push(totalPages);
-    }
-
-    return pages;
   };
 
   const pageNumbers = generatePageNumbers();
@@ -69,8 +69,11 @@ export const Pagination = ({
         {pageNumbers.map((page, index) => {
           if (page === "...") {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-gray-500 text-xs">
-                ...
+              <span
+                key={`ellipsis-${index}`}
+                className="w-9 py-2 text-gray-400 flex justify-center"
+              >
+                <BsThreeDots />
               </span>
             );
           }
@@ -79,9 +82,9 @@ export const Pagination = ({
             <button
               key={page}
               onClick={() => handlePageChange(page as number)}
-              className={`px-3 py-2 rounded-lg transition-colors text-xs ${
+              className={`w-9 py-2 rounded-lg transition-colors text-xs text-center ${
                 currentPage === page
-                  ? "bg-gray-600 text-white"
+                  ? "border border-gray-600 bg-gray-600 text-white"
                   : "border border-gray-600 text-gray-300 hover:bg-gray-700"
               }`}
             >
