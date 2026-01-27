@@ -141,13 +141,6 @@ export function SongsPage() {
     updateURL(navigation);
   }, [navigation]);
 
-  // ページ変更時にcontent要素のスクロールを一番上に戻す
-  useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTo({ top: 0 });
-    }
-  }, [navigation.page]);
-
   // 総ページ数を計算
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
@@ -490,11 +483,14 @@ export function SongsPage() {
 
         {/* ページネーション */}
         <div className="flex justify-center">
-          <Pagination
-            currentPage={navigation.page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          {totalPages > 0 && (
+            <Pagination
+              currentPage={navigation.page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              scrollTargetRef={contentRef}
+            />
+          )}
         </div>
       </footer>
     </>

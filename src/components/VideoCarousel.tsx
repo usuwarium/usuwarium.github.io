@@ -48,7 +48,7 @@ export function VideoCarousel({ section, className }: VideoCarouselProps) {
         stopOnInteraction: false,
         stopOnMouseEnter: true,
       }),
-    ]
+    ],
   );
 
   const onPrevButtonClick = useCallback(() => {

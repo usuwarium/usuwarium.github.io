@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Video } from "@/lib/types";
 import { useQueryVideos } from "@/hooks/useQueryVideos";
 import { VideoGallery } from "@/components/VideoGallery";
@@ -71,6 +71,7 @@ function updateURL(nav: NavigationState): void {
 }
 
 export function ArchivePage() {
+  const contentRef = useRef<HTMLDivElement>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [navigation, setNavigation] = useState<NavigationState>(() => initNavigationFromURL());
 
@@ -108,9 +109,7 @@ export function ArchivePage() {
     updateURL(navigation);
   }, [navigation]);
 
-  const getTotalPages = (): number => {
-    return Math.ceil(totalCount / ITEMS_PER_PAGE);
-  };
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const handleSortToggle = (sortKey: "published_at" | "like_count" | "view_count") => {
     setNavigation((prev) => {
@@ -227,7 +226,7 @@ export function ArchivePage() {
           </section>
         </header>
 
-        <div className="content px-2 md:px-8">
+        <div className="content px-2 md:px-8" ref={contentRef}>
           <section>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -251,11 +250,14 @@ export function ArchivePage() {
       </main>
 
       <footer className="footer bg-gray-800 border-t border-gray-700">
-        <Pagination
-          currentPage={navigation.page}
-          totalPages={getTotalPages()}
-          onPageChange={handlePageChange}
-        />
+        {totalPages > 0 && (
+          <Pagination
+            currentPage={navigation.page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            scrollTargetRef={contentRef}
+          />
+        )}
       </footer>
     </>
   );
