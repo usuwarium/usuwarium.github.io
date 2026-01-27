@@ -66,6 +66,9 @@ export interface PlaylistItem {
   playlist_id: PlaylistId;
   song_id: SongId;
   order: number;
+  volumeOffset: number;
+  startTimeOffset: number;
+  endTimeOffset: number;
 }
 
 export interface PlaylistSong extends PlaylistItem, Song {}

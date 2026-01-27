@@ -45,6 +45,9 @@ export async function restorePlaylist(
       playlist_id: id,
       song_id: item.song_id,
       order: item.order,
+      volumeOffset: 0,
+      startTimeOffset: 0,
+      endTimeOffset: 0,
     })),
   );
 }
@@ -72,6 +75,9 @@ export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId
     playlist_id: playlistId,
     song_id: songId,
     order: maxOrder + index + 1,
+    volumeOffset: 0,
+    startTimeOffset: 0,
+    endTimeOffset: 0,
   }));
   await db.playlistItems.bulkAdd(itemsToAdd);
 
@@ -99,6 +105,9 @@ export async function addSongToPlaylistAtPosition(
     playlist_id: playlistId,
     song_id: songId,
     order: position,
+    volumeOffset: 0,
+    startTimeOffset: 0,
+    endTimeOffset: 0,
   });
 
   await db.playlists.update(playlistId, {
@@ -270,6 +279,9 @@ export async function importPlaylists(jsonData: string): Promise<string | null> 
         playlist_id: playlistItem.playlist_id,
         song_id: playlistItem.song_id,
         order: playlistItem.order,
+        volumeOffset: playlistItem.volumeOffset ?? 0,
+        startTimeOffset: playlistItem.startTimeOffset ?? 0,
+        endTimeOffset: playlistItem.endTimeOffset ?? 0,
       });
     }
 
