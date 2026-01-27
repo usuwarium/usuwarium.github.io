@@ -1,10 +1,25 @@
+import { type RefObject } from "react";
+
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  scrollTargetRef?: RefObject<HTMLElement>;
 }
 
-export const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+export const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  scrollTargetRef,
+}: PaginationProps) => {
+  const handlePageChange = (page: number) => {
+    if (scrollTargetRef?.current) {
+      scrollTargetRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    onPageChange(page);
+  };
+
   if (totalPages <= 0) {
     return null;
   }
@@ -43,7 +58,7 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
   return (
     <div className="flex items-center justify-center gap-2 min-h-[52px]">
       <button
-        onClick={() => onPageChange(currentPage - 1)}
+        onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="px-3 py-2 rounded-lg border border-gray-600 text-gray-300 text-xs hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
@@ -63,7 +78,7 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
           return (
             <button
               key={page}
-              onClick={() => onPageChange(page as number)}
+              onClick={() => handlePageChange(page as number)}
               className={`px-3 py-2 rounded-lg transition-colors text-xs ${
                 currentPage === page
                   ? "bg-gray-600 text-white"
@@ -77,7 +92,7 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
       </div>
 
       <button
-        onClick={() => onPageChange(currentPage + 1)}
+        onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="px-3 py-2 rounded-lg border border-gray-600 text-gray-300 text-xs hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import Select from "react-select";
 import { useQuerySongs } from "@/hooks/useQuerySongs";
 import { useArtists } from "@/hooks/useArtists";
@@ -16,6 +16,7 @@ type ViewMode = "song" | "artist";
 const ITEMS_PER_PAGE = 50;
 
 export function StatisticsPage() {
+  const contentRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("song");
   const [startYear, setStartYear] = useState<string>("");
   const [startMonth, setStartMonth] = useState<string>("");
@@ -325,7 +326,7 @@ export function StatisticsPage() {
           </section>
         </header>
 
-        <div className="content w-full px-2 md:px-8">
+        <div className="content w-full px-2 md:px-8" ref={contentRef}>
           {/* データテーブル */}
           {loading ? (
             <div className="text-center py-8">
@@ -438,6 +439,7 @@ export function StatisticsPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
+          scrollTargetRef={contentRef}
         />
       </footer>
     </>
