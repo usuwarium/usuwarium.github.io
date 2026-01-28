@@ -37,6 +37,10 @@ body,
   background-color: #2a3b65;
 }
 
+.footer {
+  @apply bg-gray-800 border-t border-gray-700;
+}
+
 h1,
 h2,
 h3,
@@ -285,4 +289,15 @@ button {
 }
 .statistics-filters > label {
   @apply block mb-1 self-center;
+}
+
+/* Pagination styling */
+.page-btn {
+  @apply w-10 h-10 border-1 border-gray-600 text-white rounded hover:bg-gray-600 duration-200;
+}
+.page-btn.active {
+  @apply bg-gray-600;
+}
+.page-btn > svg {
+  @apply inline-block mb-1;
 }
