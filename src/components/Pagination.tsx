@@ -1,5 +1,6 @@
 import { useRef, type RefObject } from "react";
 import { BsThreeDots } from "react-icons/bs";
+import { FaChevronRight, FaChevronLeft } from "react-icons/fa6";
 
 interface PaginationProps {
   currentPage: number;
@@ -60,20 +61,17 @@ export const Pagination = ({
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-2 rounded-lg border border-gray-600 text-gray-300 text-xs hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="page-btn"
       >
-        前へ
+        <FaChevronLeft className="text-sm" />
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="items-center gap-1 hidden md:flex">
         {pageNumbers.map((page, index) => {
           if (page === "...") {
             return (
-              <span
-                key={`ellipsis-${index}`}
-                className="w-9 py-2 text-gray-400 flex justify-center"
-              >
-                <BsThreeDots />
+              <span key={`ellipsis-${index}`} className="w-10 text-gray-300 flex justify-center">
+                <BsThreeDots className="text-sm" />
               </span>
             );
           }
@@ -82,11 +80,7 @@ export const Pagination = ({
             <button
               key={page}
               onClick={() => handlePageChange(page as number)}
-              className={`w-9 py-2 rounded-lg transition-colors text-xs text-center ${
-                currentPage === page
-                  ? "border border-gray-600 bg-gray-600 text-white"
-                  : "border border-gray-600 text-gray-300 hover:bg-gray-700"
-              }`}
+              className={`page-btn text-sm ${currentPage === page ? "active" : ""}`}
             >
               {page}
             </button>
@@ -94,12 +88,18 @@ export const Pagination = ({
         })}
       </div>
 
+      <div className="flex items-center gap-1 visible md:hidden">
+        <span className="w-20 font-semibold text-center">
+          {currentPage} / {totalPages}
+        </span>
+      </div>
+
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-2 rounded-lg border border-gray-600 text-gray-300 text-xs hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="page-btn"
       >
-        次へ
+        <FaChevronRight className="text-sm" />
       </button>
     </div>
   );

@@ -249,7 +249,7 @@ export function ArchivePage() {
         )}
       </main>
 
-      <footer className="footer bg-gray-800 border-t border-gray-700">
+      <footer className="footer">
         {totalPages > 0 && (
           <Pagination
             currentPage={navigation.page}
