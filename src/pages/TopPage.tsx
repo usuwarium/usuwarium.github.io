@@ -1,7 +1,7 @@
 import { VideoCarousel, type VideoSection } from "@/components/VideoCarousel";
 import { useEffect } from "react";
 import { FaArrowRight } from "react-icons/fa";
-import { FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
+import { FaTiktok, FaXTwitter, FaYoutube, FaTriangleExclamation } from "react-icons/fa6";
 import { GiCamel } from "react-icons/gi";
 import { TbWorld } from "react-icons/tb";
 import { Link, useNavigate } from "react-router-dom";
@@ -59,6 +59,11 @@ export function TopPage() {
             <FaArrowRight className="inline ml-2 mb-1" />
           </Link>
         </p>
+      </article>
+
+      <article className="mb-12 p-4 border-2 border-yellow-400 bg-yellow-50 rounded-lg flex items-center text-black font-bold">
+        <FaTriangleExclamation className="text-yellow-600 text-3xl mr-4 flex-shrink-0" />
+        <p>このサイトは現在構築中です。ご利用は今しばらくお待ち下さい。</p>
       </article>
 
       {VIDEO_SECTIONS.map((section) => (
