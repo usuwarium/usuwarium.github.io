@@ -3,7 +3,7 @@
  */
 
 import { google, youtube_v3 } from "googleapis";
-import type { YouTubeVideo, YouTubeComment } from "../../src/lib/youtube-types.ts";
+import type { YouTubeVideo } from "../../src/lib/youtube-types.ts";
 
 export class YouTubeAPI {
   private youtube: youtube_v3.Youtube;

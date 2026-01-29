@@ -10,12 +10,13 @@ import { humanizeDate, timestampSpan } from "@/lib/humanize";
 import type { SongId } from "@/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { FaListUl, FaRegBookmark, FaTimesCircle } from "react-icons/fa";
+import { FaBookmark, FaListUl, FaRegBookmark, FaTimesCircle } from "react-icons/fa";
 import { IoMdMusicalNote } from "react-icons/io";
 import Select from "react-select";
 import { LoadingIcon } from "@/components/LoadingIcon";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { RiPlayListAddFill } from "react-icons/ri";
+import { usePlaylists } from "@/hooks/usePlaylists";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -136,6 +137,14 @@ export function SongsPage() {
     sortOrder: navigation.sortOrder,
   });
 
+  // プレイリスト情報を取得
+  const {
+    playlistSongIdMap,
+    reload: reloadPlaylists,
+    loading: playlistsLoading,
+    error: playlistsError,
+  } = usePlaylists();
+
   // ナビゲーション変更時にURLを更新
   useEffect(() => {
     updateURL(navigation);
@@ -215,6 +224,7 @@ export function SongsPage() {
     setOpenBulkDropdown(false);
     setSelectedSongs(new Set());
     setIsSelectMode(false);
+    reloadPlaylists();
   };
 
   const getYouTubeUrl = (videoId: string, startTime?: number) => {
@@ -247,11 +257,27 @@ export function SongsPage() {
   if (artistsError) {
     toast.error(artistsError);
   }
+  if (playlistsError) {
+    toast.error(playlistsError);
+  }
 
   const page = navigation.page;
   const pageStart = (page - 1) * ITEMS_PER_PAGE;
   const pageEnd = pageStart + ITEMS_PER_PAGE;
   const displayedSongs = songs.slice(pageStart, pageEnd);
+
+  // いずれかのプレイリストに含まれている曲のIDを事前計算
+  const songsInPlaylists = useMemo(() => {
+    const songIdSet = new Set<SongId>();
+    if (!playlistsLoading) {
+      for (const playlistSongs of playlistSongIdMap.values()) {
+        for (const songId of playlistSongs) {
+          songIdSet.add(songId);
+        }
+      }
+    }
+    return songIdSet;
+  }, [playlistSongIdMap, playlistsLoading]);
 
   return (
     <main className="main">
@@ -423,7 +449,11 @@ export function SongsPage() {
                             onClick={() => handleToggleDropdown(song.song_id)}
                             className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition"
                           >
-                            <FaRegBookmark className="inline mr-1" />
+                            {songsInPlaylists.has(song.song_id) ? (
+                              <FaBookmark className="inline mr-1" />
+                            ) : (
+                              <FaRegBookmark className="inline mr-1" />
+                            )}
                             <span className="hidden md:inline md:px-1">追加</span>
                           </button>
                           {openDropdownSongId === song.song_id && (
