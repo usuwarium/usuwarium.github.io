@@ -254,131 +254,131 @@ export function SongsPage() {
   const displayedSongs = songs.slice(pageStart, pageEnd);
 
   return (
-    <>
-      <main className="main">
-        <header className="header">
-          <h1 className="text-xl md:text-4xl">Songs</h1>
+    <main className="main">
+      <header className="header margin">
+        <h1 className="text-xl md:text-4xl">Songs</h1>
 
-          {/* 検索 */}
-          <section className="songs-search">
-            <label htmlFor="keyword" className="keyword">
-              フリーワード
-            </label>
-            <SearchInput
-              id="keyword"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="検索キーワード"
-              className="keyword-field"
-            />
+        {/* 検索 */}
+        <section className="songs-search">
+          <label htmlFor="keyword" className="keyword">
+            フリーワード
+          </label>
+          <SearchInput
+            id="keyword"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="検索キーワード"
+            className="keyword-field"
+          />
 
-            <label htmlFor="artist" className="artist">
+          <label htmlFor="artist" className="artist">
+            アーティスト
+          </label>
+          <Select<OptionType>
+            id="artist"
+            className="artist-field select-box"
+            classNamePrefix="Select"
+            value={artistOptions.find((opt) => opt.value === navigation.selectedArtist)}
+            onChange={(option) => handleArtistChange(option?.value || "")}
+            options={artistOptions}
+            placeholder="選択..."
+            isClearable
+          />
+
+          <label htmlFor="title" className="title">
+            楽曲タイトル
+          </label>
+          <Select<OptionType>
+            id="title"
+            className="title-field select-box"
+            classNamePrefix="Select"
+            value={titleOptions.find((opt) => opt.value === navigation.selectedTitle)}
+            onChange={(option) => handleTitleChange(option?.value || "")}
+            options={titleOptions}
+            placeholder="選択..."
+            isClearable
+          />
+        </section>
+
+        {/* ソートボタン */}
+        <div className="flex">
+          <section className="sort-btn-group mb-2 ml-auto">
+            <button
+              onClick={() => handleSortToggle("published_at")}
+              className={`sort-btn ${
+                navigation.sortBy === "published_at" ? "sort-btn-active" : ""
+              }`}
+            >
+              投稿日時
+              <SortIcon
+                state={navigation.sortBy === "published_at" ? navigation.sortOrder : "none"}
+              />
+            </button>
+            <button
+              onClick={() => handleSortToggle("artist")}
+              className={`sort-btn ${navigation.sortBy === "artist" ? "sort-btn-active" : ""}`}
+            >
               アーティスト
-            </label>
-            <Select<OptionType>
-              id="artist"
-              className="artist-field select-box"
-              classNamePrefix="Select"
-              value={artistOptions.find((opt) => opt.value === navigation.selectedArtist)}
-              onChange={(option) => handleArtistChange(option?.value || "")}
-              options={artistOptions}
-              placeholder="選択..."
-              isClearable
-            />
-
-            <label htmlFor="title" className="title">
-              楽曲タイトル
-            </label>
-            <Select<OptionType>
-              id="title"
-              className="title-field select-box"
-              classNamePrefix="Select"
-              value={titleOptions.find((opt) => opt.value === navigation.selectedTitle)}
-              onChange={(option) => handleTitleChange(option?.value || "")}
-              options={titleOptions}
-              placeholder="選択..."
-              isClearable
-            />
+              <SortIcon state={navigation.sortBy === "artist" ? navigation.sortOrder : "none"} />
+            </button>
+            <button
+              onClick={() => handleSortToggle("title")}
+              className={`sort-btn ${navigation.sortBy === "title" ? "sort-btn-active" : ""}`}
+            >
+              タイトル
+              <SortIcon state={navigation.sortBy === "title" ? navigation.sortOrder : "none"} />
+            </button>
           </section>
+        </div>
 
-          {/* ソートボタン */}
-          <div className="flex">
-            <section className="sort-btn-group mb-2 ml-auto">
-              <button
-                onClick={() => handleSortToggle("published_at")}
-                className={`sort-btn ${
-                  navigation.sortBy === "published_at" ? "sort-btn-active" : ""
-                }`}
-              >
-                投稿日時
-                <SortIcon
-                  state={navigation.sortBy === "published_at" ? navigation.sortOrder : "none"}
-                />
-              </button>
-              <button
-                onClick={() => handleSortToggle("artist")}
-                className={`sort-btn ${navigation.sortBy === "artist" ? "sort-btn-active" : ""}`}
-              >
-                アーティスト
-                <SortIcon state={navigation.sortBy === "artist" ? navigation.sortOrder : "none"} />
-              </button>
-              <button
-                onClick={() => handleSortToggle("title")}
-                className={`sort-btn ${navigation.sortBy === "title" ? "sort-btn-active" : ""}`}
-              >
-                タイトル
-                <SortIcon state={navigation.sortBy === "title" ? navigation.sortOrder : "none"} />
-              </button>
-            </section>
-          </div>
-
-          {loading ? (
-            <section className="text-center">
-              <div className="py-2">
-                <LoadingIcon />
-              </div>
-            </section>
-          ) : (
-            <section className="flex items-center justify-between gap-2">
-              {isSelectMode ? (
-                <div className="relative">
-                  <button
-                    onClick={handleToggleBulkDropdown}
-                    disabled={selectedSongs.size === 0}
-                    className="btn btn-primary text-sm md:text-base"
-                  >
-                    <FaListUl /> <span className="hidden md:inline">プレイリストに</span>追加 (
-                    {selectedSongs.size})
-                  </button>
-                  {openBulkDropdown && selectedSongs.size > 0 && (
-                    <AddToPlaylistDropdown
-                      songs={displayedSongs.filter((s) => selectedSongs.has(s.song_id))}
-                      onAdded={handlePlaylistAdded}
-                      onClose={() => setOpenBulkDropdown(false)}
-                    />
-                  )}
-                </div>
-              ) : (
-                <button onClick={handleToggleSelectMode} className="btn text-sm md:text-base">
-                  <FaListUl /> 複数選択
+        {loading ? (
+          <section className="text-center">
+            <div className="py-2">
+              <LoadingIcon />
+            </div>
+          </section>
+        ) : (
+          <section className="flex items-center justify-between gap-2">
+            {isSelectMode ? (
+              <div className="relative">
+                <button
+                  onClick={handleToggleBulkDropdown}
+                  disabled={selectedSongs.size === 0}
+                  className="btn btn-primary text-sm md:text-base"
+                >
+                  <FaListUl /> <span className="hidden md:inline">プレイリストに</span>追加 (
+                  {selectedSongs.size})
                 </button>
-              )}
-              {isSelectMode && (
-                <button onClick={handleToggleSelectMode} className="btn text-sm md:text-base">
-                  <FaTimesCircle /> キャンセル
-                </button>
-              )}
-              <div className="py-2 ml-auto flex-1 text-right">
-                <span className="hidden md:inline">検索結果：</span>
-                <span className="align-text-bottom font-bold text-blue-400">{totalCount}</span>
-                &nbsp;曲
+                {openBulkDropdown && selectedSongs.size > 0 && (
+                  <AddToPlaylistDropdown
+                    songs={displayedSongs.filter((s) => selectedSongs.has(s.song_id))}
+                    onAdded={handlePlaylistAdded}
+                    onClose={() => setOpenBulkDropdown(false)}
+                  />
+                )}
               </div>
-            </section>
-          )}
-        </header>
+            ) : (
+              <button onClick={handleToggleSelectMode} className="btn text-sm md:text-base">
+                <FaListUl /> 複数選択
+              </button>
+            )}
+            {isSelectMode && (
+              <button onClick={handleToggleSelectMode} className="btn text-sm md:text-base">
+                <FaTimesCircle /> キャンセル
+              </button>
+            )}
+            <div className="py-2 ml-auto flex-1 text-right">
+              <span className="hidden md:inline">検索結果：</span>
+              <span className="align-text-bottom font-bold text-blue-400">{totalCount}</span>
+              &nbsp;曲
+            </div>
+          </section>
+        )}
+      </header>
 
-        <div className="content px-2 md:px-8" ref={contentRef}>
+      <div className="content-wrapper" ref={contentRef}>
+        <div className="content margin px-2 md:px-8">
           {/* 一覧表示 */}
           <section className="h-full">
             {!loading && totalCount === 0 && (
@@ -436,10 +436,9 @@ export function SongsPage() {
                         </div>
                       )}
                       <div className="col col-2 self-center">
-                        <a
-                          href="#"
+                        <button
                           onClick={() => youtubePlayerRef.current?.playSong(song.song_id)}
-                          className="inline-block w-full h-full hover:underline"
+                          className="inline-block w-full h-full text-left hover:underline transition"
                         >
                           {isPlaying && (
                             <IoMdMusicalNote className="inline text-blue-400 flex-shrink-0" />
@@ -447,7 +446,7 @@ export function SongsPage() {
                           <span>
                             {song.title} / {song.artist || "-"}
                           </span>
-                        </a>
+                        </button>
                       </div>
                       <div className="col col-3 truncate">
                         <a
@@ -471,9 +470,9 @@ export function SongsPage() {
             )}
           </section>
         </div>
-      </main>
+      </div>
 
-      <footer className="footer relative bg-gray-800 border-t border-gray-700">
+      <footer className="footer">
         {/* YouTubeプレイヤーコントローラー */}
         <YouTubePlayer
           ref={youtubePlayerRef}
@@ -493,6 +492,6 @@ export function SongsPage() {
           )}
         </div>
       </footer>
-    </>
+    </main>
   );
 }

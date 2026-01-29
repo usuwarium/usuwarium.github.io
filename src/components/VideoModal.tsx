@@ -62,22 +62,17 @@ export function VideoModal({ video, onClose }: VideoModalProps) {
   return (
     <div
       id="video-modal"
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/50 flex flex-col items-center justify-center"
       ref={ref}
       onClick={closeByOutside}
     >
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-end p-2 mr-3">
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-            aria-label="Close"
-          >
-            <FaTimesCircle className="text-2xl text-white" />
-          </button>
-        </div>
-
-        <div className="px-6 pb-6">
+      <div onClick={onClose} className="flex justify-end p-2 mr-3 max-w-4xl w-full">
+        <button className="p-1 rounded-full" aria-label="Close">
+          <FaTimesCircle className="text-2xl text-gray-300 hover:text-white transition-colors" />
+        </button>
+      </div>
+      <div className="bg-gray-900 rounded-lg max-w-4xl w-full mx-2 mb-[calc(var(--menu-height)*2)] md:mb-0 max-h-[70svh] md:max-h-[80vh] overflow-y-auto">
+        <div className="px-6 py-6">
           {YouTubePlayer}
 
           <div className="space-y-3">
