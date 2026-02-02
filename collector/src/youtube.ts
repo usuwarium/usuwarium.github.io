@@ -106,7 +106,7 @@ export class YouTubeAPI {
     for (let i = 0; i < videoIds.length; i += 50) {
       const batch = videoIds.slice(i, i + 50);
       const videoResponse = await this.youtube.videos.list({
-        part: ["snippet", "contentDetails", "statistics"],
+        part: ["snippet", "contentDetails", "statistics", "liveStreamingDetails"],
         id: batch,
       });
 
@@ -122,7 +122,7 @@ export class YouTubeAPI {
    */
   async getVideo(videoId: string): Promise<YouTubeVideo> {
     const response = await this.youtube.videos.list({
-      part: ["snippet", "contentDetails", "statistics"],
+      part: ["snippet", "contentDetails", "statistics", "liveStreamingDetails"],
       id: [videoId],
     });
     const video = response.data.items?.[0] as YouTubeVideo;
@@ -142,7 +142,7 @@ export class YouTubeAPI {
     for (let i = 0; i < videoIds.length; i += 50) {
       const batch = videoIds.slice(i, i + 50);
       const response = await this.youtube.videos.list({
-        part: ["snippet", "contentDetails", "statistics"],
+        part: ["snippet", "contentDetails", "statistics", "liveStreamingDetails"],
         id: batch,
       });
 

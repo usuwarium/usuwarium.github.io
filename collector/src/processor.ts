@@ -4,6 +4,7 @@
 
 import type { Video } from "../../src/lib/types";
 import type { YouTubeVideo } from "../../src/lib/youtube-types";
+import { youtube_v3 } from "googleapis";
 import { YouTubeAPI } from "./youtube.ts";
 import { VideoClassifier } from "../../src/lib/classifier.ts";
 import { Database } from "./database.ts";
@@ -54,26 +55,31 @@ export class VideoProcessor {
   /**
    * 動画を処理（スプレッドシートには保存しない）
    */
-  async processVideo(rawVideo: YouTubeVideo): Promise<Video> {
+  async processVideo(rawVideo: youtube_v3.Schema$Video): Promise<Video | null> {
     const videoId = rawVideo.id;
     const snippet = rawVideo.snippet;
+    if (!videoId || !snippet || !snippet.channelId || !snippet.title) {
+      return null;
+    }
     const title = snippet.title;
-    const publishedAt = snippet.publishedAt;
+    const publishedAt = this.getVideoStartTime(rawVideo);
     const tags = snippet.tags || [];
 
     // 既存の動画があればsingingとcompletedの値を引き継ぐ
     const existingVideo = this.database.getVideo(videoId);
 
     // 動画を分類（既存の動画がある場合は既存の値を使用）
-    const singing = existingVideo ? existingVideo.singing : VideoClassifier.isSinging(rawVideo);
+    const singing = existingVideo
+      ? existingVideo.singing
+      : VideoClassifier.isSinging(rawVideo as YouTubeVideo);
 
     // 動画情報を作成
-    const duration = VideoClassifier.parseISO8601Duration(rawVideo.contentDetails.duration);
-    const viewCount = parseInt(rawVideo.statistics.viewCount || "0");
-    const likeCount = rawVideo.statistics.likeCount ? parseInt(rawVideo.statistics.likeCount) : 0;
+    const duration = VideoClassifier.parseISO8601Duration(rawVideo.contentDetails?.duration ?? "");
+    const viewCount = parseInt(rawVideo.statistics?.viewCount || "0");
+    const likeCount = rawVideo.statistics?.likeCount ? parseInt(rawVideo.statistics.likeCount) : 0;
 
     // 視聴可能性を判定
-    const available = VideoClassifier.isAvailable(rawVideo);
+    const available = VideoClassifier.isAvailable(rawVideo as YouTubeVideo);
 
     const video: Video = {
       video_id: videoId,
@@ -129,6 +135,10 @@ export class VideoProcessor {
       const existingVideo = this.database.getVideo(videoId);
       if (existingVideo) {
         const video = await this.processVideo(rawVideo);
+        if (!video) {
+          console.error("  ✗ 動画の処理に失敗");
+          continue;
+        }
         if (this.hasVideoChanged(existingVideo, video)) {
           console.log("  → 動画情報を更新予定");
           videosToSave.push(video);
@@ -139,6 +149,10 @@ export class VideoProcessor {
       } else {
         console.log("  → 新規動画を処理");
         const video = await this.processVideo(rawVideo);
+        if (!video) {
+          console.error("  ✗ 動画の処理に失敗");
+          continue;
+        }
         videosToSave.push(video);
         newCount++;
       }
@@ -152,7 +166,7 @@ export class VideoProcessor {
           // 取得できなかった動画
           if (existingVideo.available) {
             console.log(
-              `  → ${existingVideo.title} (${existingVideo.video_id}) を available=false に更新`
+              `  → ${existingVideo.title} (${existingVideo.video_id}) を available=false に更新`,
             );
             const updatedVideo = { ...existingVideo, available: false };
             videosToSave.push(updatedVideo);
@@ -177,7 +191,7 @@ export class VideoProcessor {
     }
 
     console.log(
-      `\n処理完了: 新規${newCount}件, 更新${updatedCount}件, 利用不可${unavailableCount}件`
+      `\n処理完了: 新規${newCount}件, 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
   }
 
@@ -224,7 +238,7 @@ export class VideoProcessor {
         // 取得できなかった動画 → 削除・非公開
         if (existingVideo.available) {
           console.log(
-            `  → ${existingVideo.title} (${existingVideo.video_id}) を available=false に更新`
+            `  → ${existingVideo.title} (${existingVideo.video_id}) を available=false に更新`,
           );
           const updatedVideo = { ...existingVideo, available: false };
           videosToUpdate.push(updatedVideo);
@@ -233,6 +247,10 @@ export class VideoProcessor {
       } else {
         // 動画情報を処理
         const video = await this.processVideo(rawVideo);
+        if (!video) {
+          console.error(`  ✗ ${existingVideo.title} (${existingVideo.video_id}) の処理に失敗`);
+          continue;
+        }
         if (this.hasVideoChanged(existingVideo, video)) {
           console.log(`  → ${video.title} (${video.video_id}) を更新`);
           videosToUpdate.push(video);
@@ -249,7 +267,20 @@ export class VideoProcessor {
     }
 
     console.log(
-      `\n他チャンネル動画の処理完了: 更新${updatedCount}件, 利用不可${unavailableCount}件`
+      `\n他チャンネル動画の処理完了: 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
+  }
+
+  /**
+   * 動画の公開日を取得
+   */
+  getVideoStartTime(video: youtube_v3.Schema$Video): string {
+    const snippet = video.snippet as youtube_v3.Schema$VideoSnippet;
+    const live = video.liveStreamingDetails;
+
+    // 1. ライブ予約またはプレミア公開の「予定時間」
+    // 2. ライブ配信中または終了済みの「実際の開始時間」
+    // 3. 通常動画の「公開日」
+    return live?.scheduledStartTime || live?.actualStartTime || snippet.publishedAt || "";
   }
 }
