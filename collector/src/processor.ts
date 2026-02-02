@@ -100,8 +100,9 @@ export class VideoProcessor {
 
   /**
    * チャンネルの全動画を処理
+   * @returns 更新された動画の件数（新規追加 + 更新 + 利用不可への変更）
    */
-  async processChannel(): Promise<void> {
+  async processChannel(): Promise<number> {
     const now = new Date();
 
     // 最古の動画の processed_at を確認して全更新の要否を判定
@@ -162,6 +163,10 @@ export class VideoProcessor {
     if (shouldFullUpdate) {
       console.log("\n削除・非公開の動画をチェック中...");
       for (const existingVideo of allExistingVideos) {
+        // メインチャンネルの動画のみチェック（他チャンネルは別途実施）
+        if (existingVideo.channel_id !== CHANNEL_ID) {
+          continue;
+        }
         if (!fetchedVideoIds.has(existingVideo.video_id)) {
           // 取得できなかった動画
           if (existingVideo.available) {
@@ -193,12 +198,15 @@ export class VideoProcessor {
     console.log(
       `\n処理完了: 新規${newCount}件, 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
+    
+    return newCount + updatedCount + unavailableCount;
   }
 
   /**
    * 他のチャンネルの動画を更新
+   * @returns 更新された動画の件数（更新 + 利用不可への変更）
    */
-  async updateOtherChannelVideos(): Promise<void> {
+  async updateOtherChannelVideos(): Promise<number> {
     console.log("\n他のチャンネルの動画を更新中...");
 
     const allVideos = this.database.getAllVideos();
@@ -207,7 +215,7 @@ export class VideoProcessor {
 
     if (otherChannelVideos.length === 0) {
       console.log("✓ 他のチャンネルの動画はありません");
-      return;
+      return 0;
     }
 
     console.log(`✓ ${otherChannelVideos.length}件の他チャンネル動画を検出`);
@@ -269,6 +277,8 @@ export class VideoProcessor {
     console.log(
       `\n他チャンネル動画の処理完了: 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
+    
+    return updatedCount + unavailableCount;
   }
 
   /**

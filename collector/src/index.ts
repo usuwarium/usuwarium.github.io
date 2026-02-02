@@ -53,10 +53,20 @@ async function main() {
   const processor = new VideoProcessor(youtube, database);
 
   // チャンネルの全動画を処理
-  await processor.processChannel();
+  const mainChannelUpdateCount = await processor.processChannel();
 
   // 他のチャンネルの動画を更新
-  await processor.updateOtherChannelVideos();
+  const otherChannelUpdateCount = await processor.updateOtherChannelVideos();
+
+  // 動画データの更新があった場合、メタデータのlast_updated_atを更新
+  const totalUpdateCount = mainChannelUpdateCount + otherChannelUpdateCount;
+  if (totalUpdateCount > 0) {
+    console.log("\nメタデータのlast_updated_atを更新中...");
+    await sheetsClient.updateLastUpdatedAt();
+    console.log("✓ メタデータを更新しました");
+  } else {
+    console.log("\n動画データの更新がないため、メタデータは更新しません");
+  }
 
   console.log("\n" + "=".repeat(60));
   console.log("処理が完了しました");
