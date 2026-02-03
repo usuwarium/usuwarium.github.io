@@ -13,6 +13,7 @@ export class SheetsClient {
   private sheets;
   private spreadsheetId: string;
   private readonly VIDEOS_SHEET_NAME = "動画一覧";
+  private readonly METADATA_SHEET_NAME = "メタデータ";
 
   constructor(config: SheetsConfig) {
     this.spreadsheetId = config.spreadsheetId;
@@ -68,6 +69,11 @@ export class SheetsClient {
         typeof value === "string"
       ) {
         obj[header] = value.toLowerCase() === "true";
+      } else if (
+        (header === "duration" || header === "view_count" || header === "like_count") &&
+        typeof value === "string"
+      ) {
+        obj[header] = parseInt(value, 10) || 0;
       } else {
         obj[header] = value;
       }
@@ -166,6 +172,52 @@ export class SheetsClient {
         requestBody: {
           valueInputOption: "RAW",
           data: batchUpdateData,
+        },
+      });
+    }
+  }
+
+  /**
+   * メタデータのlast_updated_atを更新
+   */
+  async updateLastUpdatedAt(): Promise<void> {
+    const now = new Date().toISOString();
+
+    // メタデータシートのヘッダーと値を取得
+    const response = await this.sheets.spreadsheets.values.get({
+      spreadsheetId: this.spreadsheetId,
+      range: `${this.METADATA_SHEET_NAME}!A:B`,
+    });
+
+    const data = response.data.values || [];
+    let lastUpdatedRow = -1;
+
+    // last_updated_at の行を探す
+    for (let i = 0; i < data.length; i++) {
+      if (data[i]?.[0] === "last_updated_at") {
+        lastUpdatedRow = i + 1;
+        break;
+      }
+    }
+
+    if (lastUpdatedRow === -1) {
+      // last_updated_at が存在しない場合は末尾に追加
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.spreadsheetId,
+        range: `${this.METADATA_SHEET_NAME}!A:B`,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [["last_updated_at", now]],
+        },
+      });
+    } else {
+      // 既存の行を更新
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: `${this.METADATA_SHEET_NAME}!B${lastUpdatedRow}`,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[now]],
         },
       });
     }

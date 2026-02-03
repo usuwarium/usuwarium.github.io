@@ -20,6 +20,10 @@ export interface YouTubeVideo {
     viewCount: string;
     likeCount?: string;
   };
+  liveStreamingDetails: {
+    scheduledStartTime?: string;
+    actualStartTime?: string;
+  };
 }
 
 /**

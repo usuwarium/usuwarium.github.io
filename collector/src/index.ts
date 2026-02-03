@@ -18,6 +18,7 @@ export const CHANNEL_ID = "UCeqIMtLuGc3YgwkhEaG8oDg";
 async function main() {
   const ytApiKey = process.env.YT_API_KEY;
   const spreadsheetId = process.env.SPREADSHEET_ID;
+  const dryRun = process.env.DRY_RUN === "true";
 
   if (!ytApiKey) {
     throw new Error("YT_API_KEY 環境変数が設定されていません");
@@ -29,6 +30,9 @@ async function main() {
 
   console.log("=".repeat(60));
   console.log("YouTube チャンネル情報収集ツール");
+  if (dryRun) {
+    console.log("[DRY-RUN モード] Google Sheetsへの書き込みは行いません");
+  }
   console.log("=".repeat(60));
   console.log(`チャンネル: ${CHANNEL_NAME}\n`);
 
@@ -45,7 +49,7 @@ async function main() {
 
   // データベースを初期化
   console.log("データベースを初期化中...");
-  const database = new Database(sheetsClient);
+  const database = new Database(sheetsClient, dryRun);
   await database.load();
   console.log("✓ データベースを初期化しました\n");
 
@@ -53,10 +57,24 @@ async function main() {
   const processor = new VideoProcessor(youtube, database);
 
   // チャンネルの全動画を処理
-  await processor.processChannel();
+  const mainChannelUpdateCount = await processor.processChannel();
 
   // 他のチャンネルの動画を更新
-  await processor.updateOtherChannelVideos();
+  const otherChannelUpdateCount = await processor.updateOtherChannelVideos();
+
+  // 動画データの更新があった場合、メタデータのlast_updated_atを更新
+  const totalUpdateCount = mainChannelUpdateCount + otherChannelUpdateCount;
+  if (totalUpdateCount > 0) {
+    if (dryRun) {
+      console.log("\n[DRY-RUN] メタデータのlast_updated_atの更新をスキップしました");
+    } else {
+      console.log("\nメタデータのlast_updated_atを更新中...");
+      await sheetsClient.updateLastUpdatedAt();
+      console.log("✓ メタデータを更新しました");
+    }
+  } else {
+    console.log("\n動画データの更新がないため、メタデータは更新しません");
+  }
 
   console.log("\n" + "=".repeat(60));
   console.log("処理が完了しました");

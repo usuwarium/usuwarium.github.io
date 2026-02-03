@@ -8,9 +8,11 @@ import { SheetsClient } from "./sheets-client.ts";
 export class Database {
   private videos: Map<string, Video> = new Map();
   private sheetsClient: SheetsClient;
+  private dryRun: boolean;
 
-  constructor(sheetsClient: SheetsClient) {
+  constructor(sheetsClient: SheetsClient, dryRun = false) {
     this.sheetsClient = sheetsClient;
+    this.dryRun = dryRun;
   }
 
   /**
@@ -54,7 +56,11 @@ export class Database {
    */
   async batchSaveVideos(videos: Video[]): Promise<void> {
     if (videos.length === 0) return;
-    await this.sheetsClient.batchAddVideos(videos);
+    if (this.dryRun) {
+      console.log("[DRY-RUN] Google Sheetsへの保存をスキップします");
+    } else {
+      await this.sheetsClient.batchAddVideos(videos);
+    }
     for (const video of videos) {
       this.videos.set(video.video_id, video);
     }

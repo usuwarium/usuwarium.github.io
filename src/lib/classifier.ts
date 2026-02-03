@@ -23,7 +23,7 @@ export class VideoClassifier {
     const singingKeywords = ["オリジナル曲", "カバー動画", "歌ってみた"];
 
     return singingKeywords.some((keyword) =>
-      tags.some((tag) => tag.toLowerCase().includes(keyword.toLowerCase()))
+      tags.some((tag) => tag.toLowerCase().includes(keyword.toLowerCase())),
     );
   }
 
@@ -42,7 +42,7 @@ export class VideoClassifier {
    */
   static extractTimestampsFromComments(
     comments: YouTubeComment[],
-    video: YouTubeVideo
+    video: YouTubeVideo,
   ): Omit<TimestampInfo, "song_id">[] {
     const timestamps: Omit<TimestampInfo, "song_id">[] = [];
 
