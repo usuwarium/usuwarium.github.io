@@ -7,6 +7,7 @@ import { formatTime } from "@/lib/humanize";
 import {
   completeVideo,
   importVideo,
+  refetchSingingPartsFromDescription,
   saveSongs,
   setSingingFalse,
   YOUTUBE_API_KEY,
@@ -50,15 +51,35 @@ export function ManagePage() {
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [completedVideoIds, setCompletedVideoIds] = useState<Set<VideoId>>(new Set());
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showNonSinging, setShowNonSinging] = useState(false);
 
   const videoPlayerRef = useRef<ManageVideoPlayerRef>(null);
 
-  const { videos, songs, artists, titles, reload, loading, error } = useManageData();
+  const { videos, songs, artists, titles, reload, loading, error } = useManageData(showNonSinging);
 
   const incompletedVideos = useMemo(() => {
     const filtered = showCompleted
       ? videos
-      : videos.filter((v) => !v.completed).filter((v) => !completedVideoIds.has(v.video_id));
+      : videos.filter((v) => {
+          // もしcompletedフラグがtrueでも、曲データが不完全な場合は未完了とみなす
+          const videoSongs = songs.filter((s) => s.video_id === v.video_id);
+          if (videoSongs.length > 0) {
+            // アーティストが空、または歌唱終了時間が空の曲が含まれている場合は不完全
+            const hasIncompleteSong = videoSongs.some(
+              (song) =>
+                !song.artist ||
+                song.artist.trim() === "" ||
+                song.end_time === undefined ||
+                song.end_time === null,
+            );
+            if (hasIncompleteSong) return true;
+          }
+          // completedフラグがtrueの場合は除外
+          if (v.completed) return false;
+          // ローカルで完了マークされた動画は除外
+          if (completedVideoIds.has(v.video_id)) return false;
+          return true;
+        });
 
     if (!searchQuery.trim()) {
       return filtered;
@@ -420,6 +441,35 @@ export function ManagePage() {
     }
   };
 
+  const handleRefetchSingingParts = async () => {
+    if (!currentVideo) return;
+
+    if (
+      !confirm("チャプターからタイムスタンプを再取得しますか?\n現在の歌唱パートは上書きされます。")
+    ) {
+      return;
+    }
+
+    try {
+      const fetchedParts = await refetchSingingPartsFromDescription(currentVideo.video_id, songs);
+
+      if (fetchedParts.length > 0) {
+        const convertedParts: SingingPartInput[] = fetchedParts.map((part) => ({
+          id: part.id,
+          startTime: formatTime(part.startTime),
+          endTime: part.endTime ? formatTime(part.endTime) : "",
+          title: part.title,
+          artist: part.artist,
+        }));
+        setSingingParts(convertedParts);
+        setSelectedPartId(null);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("データの取得に失敗しました");
+    }
+  };
+
   const seekToTime = (timestamp: string, play?: boolean) => {
     videoPlayerRef.current?.seekToTime(parseTimeString(timestamp) || 0, play);
   };
@@ -488,7 +538,7 @@ export function ManagePage() {
                 {loading ? "読み込み中..." : "再読み込み"}
               </button>
             </div>
-            <div className="mb-2">
+            <div className="mb-2 flex flex-col gap-1">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -497,6 +547,15 @@ export function ManagePage() {
                   className="w-4 h-4"
                 />
                 <span className="text-sm">完了済みも表示</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showNonSinging}
+                  onChange={(e) => setShowNonSinging(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">歌枠以外も表示</span>
               </label>
             </div>
 
@@ -587,7 +646,13 @@ export function ManagePage() {
                     >
                       <FaPlus /> 追加
                     </button>
-
+                    <button
+                      onClick={handleRefetchSingingParts}
+                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded transition"
+                      title="YouTube動画の概要欄（チャプター）からタイムスタンプを再取得"
+                    >
+                      データを再取得
+                    </button>
                     <button
                       onClick={handleSaveSongs}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded transition"

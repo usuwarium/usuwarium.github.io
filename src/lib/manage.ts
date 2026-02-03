@@ -35,7 +35,7 @@ async function addVideo(video: Video): Promise<void> {
 export async function saveSongs(
   video: Video,
   singingParts: SingingPart[],
-  completed?: boolean
+  completed?: boolean,
 ): Promise<void> {
   const songs: Song[] = singingParts.map((part) => ({
     song_id: part.id,
@@ -86,7 +86,7 @@ function extractVideoId(urlOrVideoId: string): string | null {
 async function fetchVideoInfoFromYouTubeApi(videoId: string): Promise<any> {
   const apiKey = encodeURIComponent(localStorage.getItem(YOUTUBE_API_KEY) ?? "");
   const response = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails,statistics&key=${apiKey}`
+    `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails,statistics&key=${apiKey}`,
   );
   const data = await response.json();
   if (!data.items || data.items.length === 0) {
@@ -94,6 +94,99 @@ async function fetchVideoInfoFromYouTubeApi(videoId: string): Promise<any> {
     throw new Error("Video not found");
   }
   return data;
+}
+
+/**
+ * タイムスタンプのパターンにマッチする正規表現
+ * 例: 0:00, 1:23, 12:34, 1:23:45
+ */
+const TIMESTAMP_PATTERN = /(?:^|\s|\n)(\d{1,2}:\d{2}(?::\d{2})?)(?=\s|$|\n)/g;
+
+/**
+ * タイムスタンプ文字列を秒数に変換
+ */
+function parseTimestamp(timestamp: string): number {
+  const parts = timestamp.split(":").map(Number);
+  if (parts.length === 2) {
+    // mm:ss
+    return parts[0] * 60 + parts[1];
+  } else if (parts.length === 3) {
+    // hh:mm:ss
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return 0;
+}
+
+/**
+ * テキストからタイムスタンプを抽出して歌唱パートを生成
+ */
+function extractTimestampsFromText(text: string, existingSongs: Song[]): SingingPart[] {
+  const timestamps: Array<{ time: number; text: string }> = [];
+  const matches = text.matchAll(TIMESTAMP_PATTERN);
+
+  for (const match of matches) {
+    const timestampStr = match[1];
+    const time = parseTimestamp(timestampStr);
+
+    // タイムスタンプの後のテキストを取得（曲名として使用）
+    const fullMatch = match[0] ?? "";
+    const timestampIndexInMatch = fullMatch.indexOf(timestampStr);
+    const baseIndex = match.index ?? 0;
+    const timestampEndIndex =
+      timestampIndexInMatch >= 0
+        ? baseIndex + timestampIndexInMatch + timestampStr.length
+        : baseIndex + fullMatch.length;
+    const remainingText = text.slice(timestampEndIndex).trim();
+    const songTitle = remainingText.split("\n")[0].trim();
+
+    if (songTitle) {
+      timestamps.push({ time, text: songTitle });
+    }
+  }
+
+  // 時間順にソート
+  timestamps.sort((a, b) => a.time - b.time);
+
+  // 重複を削除（同じ時間のタイムスタンプは最初のものを採用）
+  const uniqueTimestamps = timestamps.filter(
+    (timestamp, index, array) => index === 0 || timestamp.time !== array[index - 1].time,
+  );
+
+  // 歌唱パートを生成（endTimeは空にする）
+  return uniqueTimestamps.map((timestamp) => ({
+    id: VideoClassifier.generateSongId(existingSongs),
+    startTime: timestamp.time,
+    endTime: undefined,
+    title: timestamp.text,
+    artist: "",
+  }));
+}
+
+/**
+ * YouTube Data APIで動画の概要欄（チャプター）からタイムスタンプを抽出
+ */
+export async function refetchSingingPartsFromDescription(
+  videoId: string,
+  existingSongs: Song[],
+): Promise<SingingPart[]> {
+  // 動画の概要欄からタイムスタンプを取得
+  const videoData = await fetchVideoInfoFromYouTubeApi(videoId);
+  const description = videoData.items[0]?.snippet?.description || "";
+
+  if (!description) {
+    toast.error("動画の概要欄が空です");
+    return [];
+  }
+
+  const singingParts = extractTimestampsFromText(description, existingSongs);
+
+  if (singingParts.length === 0) {
+    toast.error("概要欄にタイムスタンプが見つかりませんでした");
+    return [];
+  }
+
+  toast.success(`概要欄から${singingParts.length}件のタイムスタンプを取得しました`);
+  return singingParts;
 }
 
 /**

@@ -98,10 +98,9 @@ export class GASClient {
    * 動画のsingingをfalseにして歌唱パートを削除
    */
   async setSingingFalse(videoId: string): Promise<{ deletedCount: number }> {
-    const result = await this.request<{ video_id: string }, { deleted_songs?: number }>(
-      "setSingingFalse",
-      { video_id: videoId }
-    );
+    const result = await this.request<string, { deleted_songs?: number }>("setSingingFalse", {
+      video_id: videoId,
+    });
 
     return {
       deletedCount: result.deleted_songs || 0,

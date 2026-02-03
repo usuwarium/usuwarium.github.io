@@ -27,23 +27,6 @@ export interface YouTubeVideo {
 }
 
 /**
- * YouTube API のコメントデータ
- */
-export interface YouTubeComment {
-  id: string;
-  snippet: {
-    topLevelComment: {
-      snippet: {
-        textDisplay: string;
-        textOriginal: string;
-        authorDisplayName: string;
-        publishedAt: string;
-      };
-    };
-  };
-}
-
-/**
  * タイムスタンプ情報
  */
 export interface TimestampInfo {
