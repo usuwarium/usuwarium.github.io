@@ -154,6 +154,7 @@ export function PlaylistPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const playlistDropdownRefs = useRef<Map<PlaylistId, HTMLDivElement>>(new Map());
   const songDropdownRefs = useRef<Map<SongId, HTMLDivElement>>(new Map());
+  const songElementRefs = useRef<Map<SongId, HTMLDivElement>>(new Map());
   const { playlists, playlistSongMap, reload, error: playlistsError } = usePlaylists();
 
   const playlistSongs = playlistSongMap.get(selectedPlaylistId!) || [];
@@ -393,6 +394,15 @@ export function PlaylistPage() {
     };
   }, [openDropdownId, openSongDropdownId]);
 
+  useEffect(() => {
+    if (playingSongId) {
+      const element = songElementRefs.current.get(playingSongId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [playingSongId]);
+
   if (playlistsError) {
     toast.error(playlistsError);
   }
@@ -550,6 +560,13 @@ export function PlaylistPage() {
                         return (
                           <div
                             key={song.song_id}
+                            ref={(el) => {
+                              if (el) {
+                                songElementRefs.current.set(song.song_id, el);
+                              } else {
+                                songElementRefs.current.delete(song.song_id);
+                              }
+                            }}
                             className={`p-3 flex items-center gap-3 rounded-lg transition ${
                               isPlaying ? "bg-gray-750" : "bg-gray-800 hover:bg-gray-750"
                             }`}
