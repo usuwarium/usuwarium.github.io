@@ -431,7 +431,7 @@ export function SongsPage() {
                   return (
                     <div
                       key={song.song_id}
-                      className={`row hover:bg-gray-700/50 ${isPlaying && "bg-gray-700/50"}`}
+                      className={`row hover:bg-gray-750 ${isPlaying && "bg-gray-750"}`}
                     >
                       {isSelectMode && (
                         <div className="col col-1 flex items-center justify-center">
