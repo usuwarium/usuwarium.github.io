@@ -5,7 +5,7 @@
 import type { Video } from "../../src/lib/types";
 import type { YouTubeVideo } from "../../src/lib/youtube-types";
 import { youtube_v3 } from "googleapis";
-import { VideoWithDetails, YouTubeAPI } from "./youtube.ts";
+import { type VideoWithDetails, YouTubeAPI } from "./youtube.ts";
 import { VideoClassifier } from "../../src/lib/classifier.ts";
 import { Database } from "./database.ts";
 import { CHANNEL_ID } from "./index.ts";

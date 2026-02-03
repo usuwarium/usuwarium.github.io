@@ -6,9 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node src/index.ts",
-    "dev": "tsx src/index.ts",
-    "dev:dry-run": "DRY_RUN=true tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "dev": "DRY_RUN=true tsx src/index.ts",
     "watch": "tsc --watch",
     "clean": "rm -rf dist"
   },
