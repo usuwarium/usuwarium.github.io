@@ -31,10 +31,9 @@ export class VideoClassifier {
    * 視聴可能か判定する
    */
   static isAvailable(rawVideo: YouTubeVideo): boolean {
-    const isUpcoming = rawVideo.snippet.liveBroadcastContent === "upcoming";
     const blockedRegions = rawVideo.contentDetails.regionRestriction?.blocked || [];
     const isBlocked = blockedRegions.includes("JP");
-    return !isUpcoming && !isBlocked;
+    return !isBlocked;
   }
 
   /**
