@@ -3,7 +3,17 @@
  */
 
 import { google, youtube_v3 } from "googleapis";
-import type { YouTubeVideo } from "../../src/lib/youtube-types.ts";
+
+export type VideoWithDetails = youtube_v3.Schema$Video & {
+  id: string;
+  snippet: youtube_v3.Schema$VideoSnippet & {
+    channelId: string;
+    title: string;
+  };
+  contentDetails: youtube_v3.Schema$VideoContentDetails;
+  statistics: youtube_v3.Schema$VideoStatistics;
+  liveStreamingDetails?: youtube_v3.Schema$VideoLiveStreamingDetails;
+};
 
 export class YouTubeAPI {
   private youtube: youtube_v3.Youtube;
@@ -39,21 +49,21 @@ export class YouTubeAPI {
   /**
    * チャンネルの全動画を取得
    */
-  async getChannelVideos(): Promise<YouTubeVideo[]> {
+  async getChannelVideos(): Promise<VideoWithDetails[]> {
     return this.getVideos();
   }
 
   /**
    * チャンネルの直近動画を取得
    */
-  async getRecentVideos(limit: number): Promise<YouTubeVideo[]> {
+  async getRecentVideos(limit: number): Promise<VideoWithDetails[]> {
     return this.getVideos(limit);
   }
 
   /**
    * チャンネルの動画を取得（内部実装）
    */
-  private async getVideos(limit?: number): Promise<YouTubeVideo[]> {
+  private async getVideos(limit?: number): Promise<VideoWithDetails[]> {
     if (!this.channelId) {
       throw new Error("チャンネルIDが初期化されていません");
     }
@@ -100,7 +110,7 @@ export class YouTubeAPI {
     } while (nextPageToken);
 
     // 動画の詳細情報を取得
-    const videos: YouTubeVideo[] = [];
+    const videos: VideoWithDetails[] = [];
 
     // 50件ずつ取得
     for (let i = 0; i < videoIds.length; i += 50) {
@@ -110,7 +120,7 @@ export class YouTubeAPI {
         id: batch,
       });
 
-      const batchVideos = videoResponse.data.items as YouTubeVideo[];
+      const batchVideos = videoResponse.data.items as VideoWithDetails[];
       videos.push(...batchVideos);
     }
 
@@ -120,12 +130,12 @@ export class YouTubeAPI {
   /**
    * 動画情報を取得（キャッシュあり）
    */
-  async getVideo(videoId: string): Promise<YouTubeVideo> {
+  async getVideo(videoId: string): Promise<VideoWithDetails> {
     const response = await this.youtube.videos.list({
       part: ["snippet", "contentDetails", "statistics", "liveStreamingDetails"],
       id: [videoId],
     });
-    const video = response.data.items?.[0] as YouTubeVideo;
+    const video = response.data.items?.[0] as VideoWithDetails;
     if (!video) {
       throw new Error(`動画が見つかりません: ${videoId}`);
     }
@@ -135,8 +145,8 @@ export class YouTubeAPI {
   /**
    * 複数の動画情報を一括取得
    */
-  async getVideosByIds(videoIds: string[]): Promise<YouTubeVideo[]> {
-    const videos: YouTubeVideo[] = [];
+  async getVideosByIds(videoIds: string[]): Promise<VideoWithDetails[]> {
+    const videos: VideoWithDetails[] = [];
 
     // 50件ずつ取得（YouTube API の制限）
     for (let i = 0; i < videoIds.length; i += 50) {
@@ -146,7 +156,7 @@ export class YouTubeAPI {
         id: batch,
       });
 
-      const batchVideos = (response.data.items as YouTubeVideo[]) || [];
+      const batchVideos = (response.data.items as VideoWithDetails[]) || [];
       videos.push(...batchVideos);
     }
 

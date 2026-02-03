@@ -189,7 +189,7 @@ export class SheetsClient {
 
     // last_updated_at の行を探す
     for (let i = 0; i < data.length; i++) {
-      if (data[i][0] === "last_updated_at") {
+      if (data[i]?.[0] === "last_updated_at") {
         lastUpdatedRow = i + 1;
         break;
       }

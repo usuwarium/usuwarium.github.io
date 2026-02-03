@@ -5,7 +5,7 @@
 import type { Video } from "../../src/lib/types";
 import type { YouTubeVideo } from "../../src/lib/youtube-types";
 import { youtube_v3 } from "googleapis";
-import { YouTubeAPI } from "./youtube.ts";
+import { VideoWithDetails, YouTubeAPI } from "./youtube.ts";
 import { VideoClassifier } from "../../src/lib/classifier.ts";
 import { Database } from "./database.ts";
 import { CHANNEL_ID } from "./index.ts";
@@ -55,12 +55,9 @@ export class VideoProcessor {
   /**
    * 動画を処理（スプレッドシートには保存しない）
    */
-  async processVideo(rawVideo: youtube_v3.Schema$Video): Promise<Video | null> {
+  async processVideo(rawVideo: VideoWithDetails): Promise<Video | null> {
     const videoId = rawVideo.id;
     const snippet = rawVideo.snippet;
-    if (!videoId || !snippet || !snippet.channelId || !snippet.title) {
-      return null;
-    }
     const title = snippet.title;
     const publishedAt = this.getVideoStartTime(rawVideo);
     const tags = snippet.tags || [];
@@ -109,7 +106,7 @@ export class VideoProcessor {
     const allExistingVideos = this.database.getAllVideos();
     const shouldFullUpdate = this.shouldPerformFullUpdate(allExistingVideos, now);
 
-    let videos: YouTubeVideo[];
+    let videos: VideoWithDetails[];
     if (shouldFullUpdate) {
       console.log("📋 全動画を取得中（6時間以上経過）...");
       videos = await this.youtube.getChannelVideos();
@@ -198,7 +195,7 @@ export class VideoProcessor {
     console.log(
       `\n処理完了: 新規${newCount}件, 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
-    
+
     return newCount + updatedCount + unavailableCount;
   }
 
@@ -229,7 +226,7 @@ export class VideoProcessor {
     console.log(`✓ ${rawVideos.length}件の動画情報を取得`);
 
     // 取得できた動画のマップを作成
-    const rawVideoMap = new Map<string, YouTubeVideo>();
+    const rawVideoMap = new Map<string, VideoWithDetails>();
     for (const rawVideo of rawVideos) {
       rawVideoMap.set(rawVideo.id, rawVideo);
     }
@@ -277,7 +274,7 @@ export class VideoProcessor {
     console.log(
       `\n他チャンネル動画の処理完了: 更新${updatedCount}件, 利用不可${unavailableCount}件`,
     );
-    
+
     return updatedCount + unavailableCount;
   }
 
@@ -285,12 +282,12 @@ export class VideoProcessor {
    * 動画の公開日を取得
    */
   getVideoStartTime(video: youtube_v3.Schema$Video): string {
-    const snippet = video.snippet as youtube_v3.Schema$VideoSnippet;
+    const snippet = video.snippet;
     const live = video.liveStreamingDetails;
 
-    // 1. ライブ予約またはプレミア公開の「予定時間」
-    // 2. ライブ配信中または終了済みの「実際の開始時間」
-    // 3. 通常動画の「公開日」
-    return live?.scheduledStartTime || live?.actualStartTime || snippet.publishedAt || "";
+    // ライブ配信の場合は、完了済みであっても一貫して「配信予定時刻」を優先して使用する。
+    // 配信予定時刻が取得できない場合のみ「実際の開始時間」を使用し、
+    // それら両方が存在しない通常動画などでは「publishedAt」を利用する。
+    return live?.scheduledStartTime || live?.actualStartTime || snippet?.publishedAt || "";
   }
 }
