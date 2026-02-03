@@ -69,6 +69,11 @@ export class SheetsClient {
         typeof value === "string"
       ) {
         obj[header] = value.toLowerCase() === "true";
+      } else if (
+        (header === "duration" || header === "view_count" || header === "like_count") &&
+        typeof value === "string"
+      ) {
+        obj[header] = parseInt(value, 10) || 0;
       } else {
         obj[header] = value;
       }

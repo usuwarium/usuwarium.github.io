@@ -21,17 +21,41 @@ export class VideoProcessor {
 
   /**
    * 動画データに差分があるかチェック
+   * @returns 変更がある場合は変更内容の配列、ない場合はnull
    */
-  private hasVideoChanged(existing: Video, updated: Video): boolean {
-    return (
-      existing.title !== updated.title ||
-      existing.published_at !== updated.published_at ||
-      JSON.stringify(existing.tags) !== JSON.stringify(updated.tags) ||
-      existing.duration !== updated.duration ||
-      existing.view_count !== updated.view_count ||
-      existing.like_count !== updated.like_count ||
-      existing.available !== updated.available
-    );
+  private hasVideoChanged(
+    existing: Video,
+    updated: Video,
+  ): { field: string; old: unknown; new: unknown }[] | null {
+    const changes: { field: string; old: unknown; new: unknown }[] = [];
+
+    if (existing.title !== updated.title) {
+      changes.push({ field: "title", old: existing.title, new: updated.title });
+    }
+    if (existing.published_at !== updated.published_at) {
+      changes.push({
+        field: "published_at",
+        old: existing.published_at,
+        new: updated.published_at,
+      });
+    }
+    if (JSON.stringify(existing.tags) !== JSON.stringify(updated.tags)) {
+      changes.push({ field: "tags", old: existing.tags, new: updated.tags });
+    }
+    if (existing.duration !== updated.duration) {
+      changes.push({ field: "duration", old: existing.duration, new: updated.duration });
+    }
+    if (existing.view_count !== updated.view_count) {
+      changes.push({ field: "view_count", old: existing.view_count, new: updated.view_count });
+    }
+    if (existing.like_count !== updated.like_count) {
+      changes.push({ field: "like_count", old: existing.like_count, new: updated.like_count });
+    }
+    if (existing.available !== updated.available) {
+      changes.push({ field: "available", old: existing.available, new: updated.available });
+    }
+
+    return changes.length > 0 ? changes : null;
   }
 
   /**
@@ -137,8 +161,14 @@ export class VideoProcessor {
           console.error("  ✗ 動画の処理に失敗");
           continue;
         }
-        if (this.hasVideoChanged(existingVideo, video)) {
+        const changes = this.hasVideoChanged(existingVideo, video);
+        if (changes) {
           console.log("  → 動画情報を更新予定");
+          for (const change of changes) {
+            console.log(
+              `     - ${change.field}: ${JSON.stringify(change.old)} → ${JSON.stringify(change.new)}`,
+            );
+          }
           videosToSave.push(video);
           updatedCount++;
         } else {
@@ -256,8 +286,14 @@ export class VideoProcessor {
           console.error(`  ✗ ${existingVideo.title} (${existingVideo.video_id}) の処理に失敗`);
           continue;
         }
-        if (this.hasVideoChanged(existingVideo, video)) {
+        const changes = this.hasVideoChanged(existingVideo, video);
+        if (changes) {
           console.log(`  → ${video.title} (${video.video_id}) を更新`);
+          for (const change of changes) {
+            console.log(
+              `     - ${change.field}: ${JSON.stringify(change.old)} → ${JSON.stringify(change.new)}`,
+            );
+          }
           videosToUpdate.push(video);
           updatedCount++;
         }
