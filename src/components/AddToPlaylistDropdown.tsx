@@ -1,11 +1,6 @@
 import { usePlaylists } from "@/hooks/usePlaylists";
-import {
-  addSongsToPlaylist,
-  createPlaylist,
-  type PlaylistId,
-  removeSongsFromPlaylist,
-} from "@/lib/playlist";
-import type { Song } from "@/lib/types";
+import { addSongsToPlaylist, createPlaylist, removeSongsFromPlaylist } from "@/lib/playlist";
+import type { PlaylistId, Song } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaBookmark, FaPlus, FaRegBookmark } from "react-icons/fa";
@@ -44,16 +39,18 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
 
   const handleAddToPlaylist = async (playlistId: PlaylistId) => {
     try {
-      if (isInPlaylist(playlistId)) {
+      const wasInPlaylist = isInPlaylist(playlistId);
+
+      if (wasInPlaylist) {
         await removeSongsFromPlaylist(
           playlistId,
-          songs.map((s) => s.song_id)
+          songs.map((s) => s.song_id),
         );
       } else {
         const songIdSet = playlistSongIdMap.get(playlistId);
         await addSongsToPlaylist(
           playlistId,
-          songs.filter((song) => !songIdSet?.has(song.song_id)).map((s) => s.song_id)
+          songs.filter((song) => !songIdSet?.has(song.song_id)).map((s) => s.song_id),
         );
       }
       onAdded?.();
@@ -71,7 +68,7 @@ export function AddToPlaylistDropdown({ songs, onAdded, onClose }: AddToPlaylist
       const playlistId = await createPlaylist(newPlaylistName);
       await addSongsToPlaylist(
         playlistId,
-        songs.map((s) => s.song_id)
+        songs.map((s) => s.song_id),
       );
       onAdded?.();
       onClose?.();

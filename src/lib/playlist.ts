@@ -66,15 +66,23 @@ export async function deletePlaylist(playlistId: PlaylistId): Promise<void> {
   await db.playlistItems.where("playlist_id").equals(playlistId).delete();
 }
 
-// プレイリストに複数の曲を追加
+// プレイリストに複数の曲を追加（一番上に追加）
 export async function addSongsToPlaylist(playlistId: PlaylistId, songIds: SongId[]): Promise<void> {
-  const songs = await db.playlistItems.where("playlist_id").equals(playlistId).toArray();
-  const maxOrder = songs.length > 0 ? Math.max(...songs.map((s) => s.order)) : 0;
+  if (songIds.length === 0) return;
 
+  const songs = await db.playlistItems.where("playlist_id").equals(playlistId).sortBy("order");
+
+  // 既存の曲の順序を追加する曲数分だけ後ろにずらす
+  const updatesPromises = songs.map((s) =>
+    db.playlistItems.update([s.playlist_id, s.song_id], { order: s.order + songIds.length }),
+  );
+  await Promise.all(updatesPromises);
+
+  // 一番上から順に追加
   const itemsToAdd = songIds.map((songId, index) => ({
     playlist_id: playlistId,
     song_id: songId,
-    order: maxOrder + index + 1,
+    order: index + 1,
     volumeOffset: 0,
     startTimeOffset: 0,
     endTimeOffset: 0,
