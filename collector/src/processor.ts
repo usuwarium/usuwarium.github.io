@@ -100,7 +100,12 @@ export class VideoProcessor {
     const likeCount = rawVideo.statistics?.likeCount ? parseInt(rawVideo.statistics.likeCount) : 0;
 
     // 視聴可能性を判定
-    const available = VideoClassifier.isAvailable(rawVideo as YouTubeVideo);
+    let available = VideoClassifier.isAvailable(rawVideo as YouTubeVideo);
+
+    // スケジュール動画は一覧に載せないように対象外とする
+    if (title.includes("SCHEDULE") && title.includes("NOTICE")) {
+      available = false;
+    }
 
     const video: Video = {
       video_id: videoId,
