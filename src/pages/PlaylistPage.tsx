@@ -532,23 +532,25 @@ export function PlaylistPage() {
             <section className={`${selectedPlaylistId ? "block" : "hidden"} md:block min-w-0`}>
               {selectedPlaylistId ? (
                 <>
-                  <div className="flex items-center gap-2 mb-3">
-                    <h2 className="text-xl mr-1 truncate">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
+                    <h2 className="text-xl md:truncate">
                       {selectedPlaylistName}
                       <span className="text-sm">（{playlistSongs.length} 曲）</span>
                     </h2>
-                    <button
-                      onClick={() => youtubePlayerRef.current?.playAll()}
-                      className="btn min-w-32 ml-auto"
-                    >
-                      <FaPlay /> すべて再生
-                    </button>
-                    <button
-                      onClick={() => youtubePlayerRef.current?.playShuffled()}
-                      className="btn min-w-32"
-                    >
-                      <FaRandom /> シャッフル
-                    </button>
+                    <div className="flex items-center gap-2 self-end md:self-auto">
+                      <button
+                        onClick={() => youtubePlayerRef.current?.playAll()}
+                        className="btn min-w-32"
+                      >
+                        <FaPlay /> すべて再生
+                      </button>
+                      <button
+                        onClick={() => youtubePlayerRef.current?.playShuffled()}
+                        className="btn min-w-32"
+                      >
+                        <FaRandom /> シャッフル
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
