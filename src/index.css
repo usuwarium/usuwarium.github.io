@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho:wght@400;700&display=swap");
 
+@theme {
+  --color-gray-750: #2a3545;
+}
+
 :root {
   font-family: "Noto Sans JP", "Kaisei Decol", Roboto, Arial, sans-serif, "Noto Color Emoji";
 

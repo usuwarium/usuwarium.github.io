@@ -15,11 +15,6 @@
 
   .main {
     @apply flex flex-col flex-1;
-
-    scrollbar-gutter: stable;
-    @media (min-width: 768px) {
-      scrollbar-gutter: auto;
-    }
   }
 
   .header {
@@ -31,6 +26,7 @@
 
   .content-wrapper {
     @apply py-2 flex-1;
+    scrollbar-gutter: stable;
   }
 
   .content.margin {
