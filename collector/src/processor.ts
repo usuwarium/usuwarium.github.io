@@ -99,6 +99,16 @@ export class VideoProcessor {
     const viewCount = parseInt(rawVideo.statistics?.viewCount || "0");
     const likeCount = rawVideo.statistics?.likeCount ? parseInt(rawVideo.statistics.likeCount) : 0;
 
+    // ショート動画判定（180秒以内かつライブ配信でない動画のみ）
+    const isLiveStream =
+      rawVideo.liveStreamingDetails?.actualStartTime ||
+      rawVideo.liveStreamingDetails?.scheduledStartTime;
+    const shorts =
+      title.includes("shorts") && // #shorts だと #varkshorts など別ハッシュがヒットしないため `#` なしで判定
+      duration > 0 &&
+      duration <= 180 &&
+      !isLiveStream;
+
     // 視聴可能性を判定
     let available = VideoClassifier.isAvailable(rawVideo as YouTubeVideo);
 
@@ -118,6 +128,7 @@ export class VideoProcessor {
       like_count: likeCount,
       processed_at: new Date().toISOString(),
       singing,
+      shorts,
       available,
       completed: existingVideo?.completed || false,
     };
@@ -126,18 +137,24 @@ export class VideoProcessor {
 
   /**
    * チャンネルの全動画を処理
+   * @param forceFullUpdate 時間に関係なく全動画を更新するかどうか
    * @returns 更新された動画の件数（新規追加 + 更新 + 利用不可への変更）
    */
-  async processChannel(): Promise<number> {
+  async processChannel(forceFullUpdate: boolean = false): Promise<number> {
     const now = new Date();
 
     // 最古の動画の processed_at を確認して全更新の要否を判定
     const allExistingVideos = this.database.getAllVideos();
-    const shouldFullUpdate = this.shouldPerformFullUpdate(allExistingVideos, now);
+    const shouldFullUpdate =
+      forceFullUpdate || this.shouldPerformFullUpdate(allExistingVideos, now);
 
     let videos: VideoWithDetails[];
     if (shouldFullUpdate) {
-      console.log("📋 全動画を取得中（6時間以上経過）...");
+      if (forceFullUpdate) {
+        console.log("📋 全動画を取得中（強制全更新モード）...");
+      } else {
+        console.log("📋 全動画を取得中（6時間以上経過）...");
+      }
       videos = await this.youtube.getChannelVideos();
     } else {
       console.log("📋 直近50件の動画を取得中...");

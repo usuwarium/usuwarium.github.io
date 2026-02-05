@@ -4,7 +4,7 @@
 
 import { nanoid } from "nanoid";
 import type { Song } from "./types";
-import type { YouTubeVideo, YouTubeComment, TimestampInfo } from "./youtube-types";
+import type { YouTubeVideo } from "./youtube-types";
 
 export class VideoClassifier {
   /**

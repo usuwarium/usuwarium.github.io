@@ -20,6 +20,7 @@ export interface Video {
   like_count: number;
   processed_at: string; // データが登録された日時
   singing: boolean; // 歌枠もしくは歌動画フラグ
+  shorts: boolean; // ショート動画フラグ
   available: boolean; // 視聴可能フラグ
   completed: boolean; // 処理完了フラグ
 }

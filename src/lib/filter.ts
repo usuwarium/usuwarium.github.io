@@ -29,22 +29,25 @@ export const QUICK_FILTER_ITEMS: QuickFilterItem[] = [
     key: "originalSong",
     label: "オリジナル曲",
     hideOnMobile: true,
-    predicate: (video) => video.tags.includes("オリジナル曲"),
+    predicate: (video) =>
+      (video.tags.includes("オリジナル曲") || video.title.includes("オリジナル曲")) &&
+      !video.tags.includes("#shorts") &&
+      !video.title.includes("#shorts"),
   },
   {
     key: "coverSong",
     label: "カバー動画",
     hideOnMobile: true,
-    predicate: (video) => video.tags.includes("カバー動画"),
+    predicate: (video) =>
+      (video.tags.includes("カバー動画") || video.title.includes("covered by")) &&
+      !video.tags.includes("#shorts") &&
+      !video.title.includes("#shorts"),
   },
   {
     key: "shorts",
     label: "#shorts",
     hideOnMobile: false,
-    predicate: (video) =>
-      video.tags.includes("#shorts") ||
-      video.title.includes("#shorts") ||
-      video.tags.includes("縦型配信"),
+    predicate: (video) => video.shorts,
   },
   {
     key: "dance",

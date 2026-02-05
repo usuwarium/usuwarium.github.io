@@ -19,6 +19,7 @@ async function main() {
   const ytApiKey = process.env.YT_API_KEY;
   const spreadsheetId = process.env.SPREADSHEET_ID;
   const dryRun = process.env.DRY_RUN === "true";
+  const forceFullUpdate = process.argv.includes("--full");
 
   if (!ytApiKey) {
     throw new Error("YT_API_KEY 環境変数が設定されていません");
@@ -32,6 +33,9 @@ async function main() {
   console.log("YouTube チャンネル情報収集ツール");
   if (dryRun) {
     console.log("[DRY-RUN モード] Google Sheetsへの書き込みは行いません");
+  }
+  if (forceFullUpdate) {
+    console.log("[FULL モード] 時間に関係なく全動画を更新します");
   }
   console.log("=".repeat(60));
   console.log(`チャンネル: ${CHANNEL_NAME}\n`);
@@ -57,7 +61,7 @@ async function main() {
   const processor = new VideoProcessor(youtube, database);
 
   // チャンネルの全動画を処理
-  const mainChannelUpdateCount = await processor.processChannel();
+  const mainChannelUpdateCount = await processor.processChannel(forceFullUpdate);
 
   // 他のチャンネルの動画を更新
   const otherChannelUpdateCount = await processor.updateOtherChannelVideos();

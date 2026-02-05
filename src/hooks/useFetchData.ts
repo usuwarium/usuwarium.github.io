@@ -123,7 +123,8 @@ async function performDataFetch(): Promise<void> {
           like_count: parseInt(video.like_count, 10) || 0,
           duration: parseInt(video.duration, 10) || 0,
           processed_at: video.processed_at,
-          singing: video.singing === "true",
+          singing: video.singing.toLowerCase() === "true",
+          shorts: video.shorts.toLowerCase() === "true",
           available: video.available.toLowerCase() === "true",
           completed: video.completed.toLowerCase() === "true",
         } as Video;

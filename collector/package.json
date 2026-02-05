@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
+    "start:full": "tsx src/index.ts --full",
     "dev": "DRY_RUN=true tsx src/index.ts",
     "watch": "tsc --watch",
     "clean": "rm -rf dist"

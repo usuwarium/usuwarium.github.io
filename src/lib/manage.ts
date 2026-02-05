@@ -202,6 +202,16 @@ export async function importVideo(urlOrVideoId: string) {
 
   try {
     const data = await fetchVideoInfoFromYouTubeApi(videoId);
+    const duration = VideoClassifier.parseISO8601Duration(data.items[0].contentDetails.duration);
+    const isLiveStream =
+      data.items[0].liveStreamingDetails?.actualStartTime ||
+      data.items[0].liveStreamingDetails?.scheduledStartTime;
+    const shorts =
+      data.items[0].snippet.title.includes("shorts") &&
+      duration > 0 &&
+      duration <= 180 &&
+      !isLiveStream;
+
     const video: Video = {
       video_id: data.items[0].id,
       channel_id: data.items[0].snippet.channelId,
@@ -210,9 +220,10 @@ export async function importVideo(urlOrVideoId: string) {
       tags: data.items[0].snippet.tags || [],
       view_count: parseInt(data.items[0].statistics.viewCount || "0", 10),
       like_count: parseInt(data.items[0].statistics.likeCount || "0", 10),
-      duration: VideoClassifier.parseISO8601Duration(data.items[0].contentDetails.duration),
+      duration: duration,
       processed_at: new Date().toISOString(),
       singing: VideoClassifier.isSinging(data.items[0]),
+      shorts: shorts,
       available: VideoClassifier.isAvailable(data.items[0]),
       completed: false,
     };

@@ -65,7 +65,7 @@ export class SheetsClient {
           obj[header] = [];
         }
       } else if (
-        (header === "completed" || header === "singing" || header === "available") &&
+        (header === "completed" || header === "singing" || header === "shorts" || header === "available") &&
         typeof value === "string"
       ) {
         obj[header] = value.toLowerCase() === "true";
