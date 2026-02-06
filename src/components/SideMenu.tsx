@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { BiSolidDashboard, BiSolidVideos, BiSolidPlaylist } from "react-icons/bi";
 import { FaQuestionCircle } from "react-icons/fa";
-import { FaYoutube, FaXTwitter } from "react-icons/fa6";
 import { IoMdMusicalNote } from "react-icons/io";
 import { IoStatsChart } from "react-icons/io5";
 import { BsThreeDots } from "react-icons/bs";

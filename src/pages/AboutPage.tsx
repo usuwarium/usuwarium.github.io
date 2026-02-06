@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { FaRepeat, FaShuffle } from "react-icons/fa6";
 import { IoMdMusicalNote } from "react-icons/io";
-import { IoClose, IoEyeOff } from "react-icons/io5";
+import { IoClose, IoEyeOff, IoStatsChart } from "react-icons/io5";
 
 export function AboutPage() {
   return (
@@ -30,7 +30,7 @@ export function AboutPage() {
             投稿日時や再生回数、高評価数でのソートも可能です。
           </p>
           <p className="mb-3">
-            ※データは定期的に取得した情報を表示しているためリアルタイムの情報ではありません。
+            ※データは定期的に取得した情報を表示しているためリアルタイムではありません。
             <br />
             ※メンバー限定コンテンツや限定公開動画、非公開になった動画は表示されません。
           </p>
@@ -94,7 +94,7 @@ export function AboutPage() {
             いつも本当にありがとうございます！
           </p>
           <p className="mb-3">
-            ※コラボ枠で稀羽すうさんが歌唱していないパートは除外しています。
+            ※コラボ枠で稀羽すうさんが歌唱していないパートはあえて除外しています。
             <br />
             ※楽曲情報は配信終了後に手動で追加していますので最新ではない場合があります。
           </p>
@@ -118,8 +118,25 @@ export function AboutPage() {
             <br />
             また、ブラウザのサイトデータを削除するとプレイリストの内容も失われますのでご注意ください。
             <br />
-            プレイリストの内容を他のデバイスやブラウザで利用したい場合やバックアップしたい場合は、
-            画面上部のエクスポート・インポート機能をご利用ください。
+            プレイリストを他のデバイスやブラウザで共有するには、
+            プレイリストメニューのエクスポート・インポート機能をご利用ください。
+          </p>
+        </div>
+      </article>
+
+      <article className="mb-10">
+        <h2 className="text-2xl mb-4">
+          <IoStatsChart className="inline-block mr-2 mb-1" />
+          Statistics
+        </h2>
+        <div className="border-l-2 ml-2 pl-4">
+          <p className="mb-3">
+            歌枠や歌ってみた動画で歌唱された曲の統計を見ることができます。
+            <br />
+            曲別やアーティスト別で歌唱回数を確認したり、期間を絞って集計したりすることができます。
+          </p>
+          <p className="mb-3">
+            歌枠のリクエストで過去に歌っていたっけ？とか、最近よく歌っている曲は？などを調べるのに便利です。
           </p>
         </div>
       </article>
@@ -131,16 +148,19 @@ export function AboutPage() {
         </h2>
         <div className="border-l-2 ml-2 pl-4">
           <p className="mb-3">
-            当サイトは「歌枠の曲をプレイリスト化したい！」という欲求から勢いで作成した非公式のファンサイトです。
+            当サイトは「歌枠の曲をプレイリスト化したい！」という思いから勢いで作成した非公式のファンサイトです。
             <br />
             少しでも推し活の助けになれれば幸いです。
             <br />
+            気に入った曲や動画があったらぜひ公式チャンネルでも視聴して、高評価・共有などよろしくお願いします！
+          </p>
+          <p className="mb-3">
             もし内容の誤りや歌唱位置の指摘、不具合、改善点などがありましたら
             <a
               href="https://twitter.com/wiro34"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
+              className="underline px-1"
             >
               @wiro34
             </a>
@@ -152,7 +172,7 @@ export function AboutPage() {
               href="https://twitter.com/wiro34"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
+              className="underline px-1"
             >
               @wiro34
             </a>
@@ -165,18 +185,18 @@ export function AboutPage() {
           <p className="mb-3">
             当サイトに掲載している動画・サムネイルなどのコンテンツはすべて株式会社mikai様、Re:AcTライバー「稀羽すう」様に帰属しております。
             <br />
-            <FaArrowRight className="inline-block mb-1 mr-1" />
             <a
               href="https://www.v-react.com/guideline"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
+              className="link-btn mt-2"
             >
+              <FaArrowRight className="inline-block mb-1 mr-1" />
               二次的創作ガイドライン
             </a>
           </p>
           <p className="mb-3">
-            当サイトを制作するにあたり
+            また当サイトを制作するにあたり
             <a
               href="https://nanaga-kita.com/"
               target="_blank"
