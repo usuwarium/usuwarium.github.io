@@ -159,6 +159,7 @@ function addVideo(spreadsheet, video) {
       duration: video.duration || 0,
       processed_at: video.processed_at || "",
       singing: video.singing || false,
+      shorts: video.shorts || false,
       available: video.available || false,
       completed: video.completed || false,
     };
