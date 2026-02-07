@@ -61,11 +61,6 @@ export function TopPage() {
         </p>
       </article>
 
-      <article className="mb-12 p-4 border-2 border-yellow-400 bg-yellow-50 rounded-lg flex items-center text-black font-bold">
-        <FaTriangleExclamation className="text-yellow-600 text-3xl mr-4 flex-shrink-0" />
-        <p>このサイトは現在構築中です。ご利用は今しばらくお待ち下さい。</p>
-      </article>
-
       {VIDEO_SECTIONS.map((section) => (
         <VideoCarousel key={section.filter} section={section} className="mb-12" />
       ))}
