@@ -5,7 +5,7 @@ interface SplashProps {
 }
 
 // ローディング時間の定数
-const LOADING_DURATION_MS = 1500;
+const LOADING_DURATION_MS = 2000;
 const FADE_DURATION_MS = 500;
 const LOADING_DURATION_S = LOADING_DURATION_MS / 1000;
 const FADE_DURATION_S = FADE_DURATION_MS / 1000;
