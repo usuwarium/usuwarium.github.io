@@ -329,7 +329,7 @@ export function SongsPage() {
 
         {/* ソートボタン */}
         <div className="flex">
-          <section className="sort-btn-group mb-2 ml-auto">
+          <section className="sort-btn-group-3 mb-2 ml-auto">
             <button
               onClick={() => handleSortToggle("published_at")}
               className={`sort-btn ${
