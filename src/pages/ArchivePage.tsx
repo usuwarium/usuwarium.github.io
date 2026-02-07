@@ -181,7 +181,7 @@ export function ArchivePage() {
           </section>
 
           {/* ソート選択 */}
-          <section className="sort-btn-group ml-auto">
+          <section className="sort-btn-group-2 ml-auto">
             <button
               onClick={() => handleSortToggle("published_at")}
               className={`sort-btn ${
