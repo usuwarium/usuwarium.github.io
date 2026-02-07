@@ -6,7 +6,7 @@ import useSWR from "swr";
 export interface QueryVideosParams {
   searchQuery?: string;
   selectedFilter?: string | null;
-  sortBy?: "published_at" | "like_count" | "view_count" | null;
+  sortBy?: "published_at" | "view_count" | null;
   sortOrder?: "asc" | "desc";
   page: number;
   itemsPerPage: number;
@@ -24,7 +24,7 @@ export interface UseQueryVideosResult {
 async function queryVideos(params: {
   searchQuery?: string;
   selectedFilter?: string | null;
-  sortBy?: "published_at" | "like_count" | "view_count" | null;
+  sortBy?: "published_at" | "view_count" | null;
   sortOrder?: "asc" | "desc";
   page: number;
   itemsPerPage: number;
@@ -39,11 +39,6 @@ async function queryVideos(params: {
       sortOrder === "asc"
         ? db.videos.orderBy("published_at")
         : db.videos.orderBy("published_at").reverse();
-  } else if (sortBy === "like_count") {
-    collection =
-      sortOrder === "asc"
-        ? db.videos.orderBy("like_count")
-        : db.videos.orderBy("like_count").reverse();
   } else if (sortBy === "view_count") {
     collection =
       sortOrder === "asc"

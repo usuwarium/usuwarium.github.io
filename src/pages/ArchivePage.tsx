@@ -16,7 +16,7 @@ const ITEMS_PER_PAGE = 32;
 // ナビゲーション状態の型定義
 interface NavigationState {
   page: number;
-  sortBy: "published_at" | "like_count" | "view_count" | null;
+  sortBy: "published_at" | "view_count" | null;
   sortOrder: "asc" | "desc";
   searchQuery: string;
   selectedFilter: string | null;
@@ -31,8 +31,8 @@ function initNavigationFromURL(): NavigationState {
   const searchQuery = params.get("q") || "";
   const selectedFilter = params.get("filter") || null;
 
-  let sortBy: "published_at" | "like_count" | "view_count" = "published_at";
-  if (sortParam === "published_at" || sortParam === "like_count" || sortParam === "view_count") {
+  let sortBy: "published_at" | "view_count" = "published_at";
+  if (sortParam === "published_at" || sortParam === "view_count") {
     sortBy = sortParam;
   }
 
@@ -111,7 +111,7 @@ export function ArchivePage() {
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  const handleSortToggle = (sortKey: "published_at" | "like_count" | "view_count") => {
+  const handleSortToggle = (sortKey: "published_at" | "view_count") => {
     setNavigation((prev) => {
       if (prev.sortBy === sortKey) {
         // 同じ属性をクリックした場合は昇順・降順を切り替え
@@ -191,15 +191,6 @@ export function ArchivePage() {
               投稿日時
               <SortIcon
                 state={navigation.sortBy === "published_at" ? navigation.sortOrder : "none"}
-              />
-            </button>
-            <button
-              onClick={() => handleSortToggle("like_count")}
-              className={`sort-btn ${navigation.sortBy === "like_count" ? "sort-btn-active" : ""}`}
-            >
-              高評価数
-              <SortIcon
-                state={navigation.sortBy === "like_count" ? navigation.sortOrder : "none"}
               />
             </button>
             <button
