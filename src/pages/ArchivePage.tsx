@@ -16,7 +16,7 @@ const ITEMS_PER_PAGE = 32;
 // ナビゲーション状態の型定義
 interface NavigationState {
   page: number;
-  sortBy: "published_at" | "view_count" | null;
+  sortBy: "published_at" | "view_count";
   sortOrder: "asc" | "desc";
   searchQuery: string;
   selectedFilter: string | null;
@@ -36,10 +36,15 @@ function initNavigationFromURL(): NavigationState {
     sortBy = sortParam;
   }
 
+  let sortOrder: "asc" | "desc" = "desc";
+  if (orderParam === "asc" || orderParam === "desc") {
+    sortOrder = orderParam;
+  }
+
   return {
     page: Math.max(1, page),
     sortBy,
-    sortOrder: (orderParam as "asc" | "desc") || "desc",
+    sortOrder,
     searchQuery,
     selectedFilter,
   };
@@ -53,7 +58,7 @@ function updateURL(nav: NavigationState): void {
     params.set("page", nav.page.toString());
   }
 
-  if (nav.sortBy) {
+  if (nav.sortBy !== "published_at" || nav.sortOrder !== "desc") {
     params.set("sort", nav.sortBy);
     params.set("order", nav.sortOrder);
   }

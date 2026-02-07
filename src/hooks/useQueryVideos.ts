@@ -45,7 +45,7 @@ async function queryVideos(params: {
         ? db.videos.orderBy("view_count")
         : db.videos.orderBy("view_count").reverse();
   } else {
-    collection = db.videos.toCollection();
+    collection = db.videos.orderBy("published_at").reverse();
   }
 
   // フィルタ処理
