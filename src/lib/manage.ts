@@ -1,7 +1,8 @@
-import type { Video, Song } from "./types";
 import toast from "react-hot-toast";
-import { GASClient } from "./gas-client";
 import { VideoClassifier } from "./classifier";
+import { GASClient } from "./gas-client";
+import type { Song, Video } from "./types";
+import type { YouTubeVideo } from "./youtube-types";
 
 export const YOUTUBE_API_KEY = "youtube_api_key";
 
@@ -45,7 +46,8 @@ export async function saveSongs(
     title: part.title,
     artist: part.artist,
     start_time: part.startTime,
-    end_time: part.endTime,
+    end_time: part.endTime ?? 0,
+    tags: [],
     edited: true,
   }));
   await GASClient.get().addSongs(video.video_id, songs, completed);
@@ -83,7 +85,7 @@ function extractVideoId(urlOrVideoId: string): string | null {
 }
 
 // YouTube Data APIで動画情報を取得
-async function fetchVideoInfoFromYouTubeApi(videoId: string): Promise<any> {
+async function fetchVideoInfoFromYouTubeApi(videoId: string): Promise<{ items: YouTubeVideo[] }> {
   const apiKey = encodeURIComponent(localStorage.getItem(YOUTUBE_API_KEY) ?? "");
   const response = await fetch(
     `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails,statistics&key=${apiKey}`,

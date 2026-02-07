@@ -6,6 +6,7 @@ export interface YouTubeVideo {
   snippet: {
     channelId: string;
     title: string;
+    description: string;
     publishedAt: string;
     tags?: string[];
     liveBroadcastContent: string;
