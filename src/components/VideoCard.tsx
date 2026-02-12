@@ -4,21 +4,22 @@ import type { Video } from "@/lib/types";
 interface VideoCardProps {
   video: Video;
   onClick: (video: Video) => void;
+  thumbnailSize?: "default" | "mqdefault" | "hqdefault" | "sddefault" | "maxresdefault";
 }
 
 function getThumbnailUrl(
   video: Video,
-  size: "default" | "mqdefault" | "hqdefault" = "mqdefault"
+  size: "default" | "mqdefault" | "hqdefault" | "sddefault" | "maxresdefault" = "mqdefault",
 ): string {
   return `https://i.ytimg.com/vi/${video.video_id}/${size}.jpg`;
 }
 
-export function VideoCard({ video, onClick }: VideoCardProps) {
+export function VideoCard({ video, onClick, thumbnailSize = "mqdefault" }: VideoCardProps) {
   return (
     <article className="cursor-pointer group" onClick={() => onClick(video)}>
       <div className="relative overflow-hidden rounded-md aspect-video">
         <img
-          src={getThumbnailUrl(video, "hqdefault")}
+          src={getThumbnailUrl(video, thumbnailSize)}
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
