@@ -1,7 +1,7 @@
 import { VideoCarousel, type VideoSection } from "@/components/VideoCarousel";
 import { useEffect } from "react";
 import { FaArrowRight } from "react-icons/fa";
-import { FaTiktok, FaXTwitter, FaYoutube, FaTriangleExclamation } from "react-icons/fa6";
+import { FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { GiCamel } from "react-icons/gi";
 import { TbWorld } from "react-icons/tb";
 import { Link, useNavigate } from "react-router-dom";
@@ -62,7 +62,12 @@ export function TopPage() {
       </article>
 
       {VIDEO_SECTIONS.map((section) => (
-        <VideoCarousel key={section.filter} section={section} className="mb-12" />
+        <VideoCarousel
+          thumbnailSize="sddefault"
+          key={section.filter}
+          section={section}
+          className="mb-12"
+        />
       ))}
 
       <section className="mb-8">

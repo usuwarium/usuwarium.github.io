@@ -20,9 +20,10 @@ export interface VideoSection {
 interface VideoCarouselProps {
   section: VideoSection;
   className?: string;
+  thumbnailSize?: "default" | "mqdefault" | "hqdefault" | "sddefault" | "maxresdefault";
 }
 
-export function VideoCarousel({ section, className }: VideoCarouselProps) {
+export function VideoCarousel({ section, className, thumbnailSize }: VideoCarouselProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   const { videos, loading } = useQueryVideos({
@@ -108,7 +109,11 @@ export function VideoCarousel({ section, className }: VideoCarouselProps) {
                 key={video.video_id}
                 className="glow-0 shrink-0 basis-1/1 md:basis-1/3 min-w-0 px-2"
               >
-                <VideoCard video={video} onClick={() => handleCardClick(video)} />
+                <VideoCard
+                  video={video}
+                  onClick={() => handleCardClick(video)}
+                  thumbnailSize={thumbnailSize}
+                />
               </div>
             ))}
           </div>
