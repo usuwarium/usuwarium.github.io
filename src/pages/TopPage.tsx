@@ -85,7 +85,7 @@ export function TopPage() {
             <FaXTwitter className="mr-1 mb-1" />
             稀羽すう🦢
           </a>
-          <a href="https://www.tiktok.com/@suu_usuwa" className="link-btn">
+          <a href="https://www.tiktok.com/@suuusuwa" className="link-btn">
             <FaTiktok className="mr-1 mb-1" />
             TikTok
           </a>
