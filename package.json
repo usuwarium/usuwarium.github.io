@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4.2.4",
     "dexie": "^4.3.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
@@ -41,8 +41,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^16.5.0",
-    "postcss": "^8.5.6",
-    "rollup-plugin-visualizer": "^6.0.5",
+    "postcss": "^8.5.14",
+    "rollup-plugin-visualizer": "^6.0.11",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.59.2",
@@ -54,7 +54,8 @@
       "rollup": ">=4.58.0",
       "minimatch": ">=10.2.3",
       "ajv": ">=6.14.0",
-      "qs": ">=6.14.2"
+      "qs": ">=6.14.2",
+      "yaml": ">=1.10.3"
     }
   }
 }
