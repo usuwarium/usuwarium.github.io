@@ -83,14 +83,6 @@ function parseTextToSingingParts(text: string, songs: Song[]): SingingPartInput[
     });
   }
 
-  // endTimeを設定: 次のパートのstartTime - 1秒
-  for (let i = 0; i < parts.length - 1; i++) {
-    const nextStartSec = parseTimeString(parts[i + 1].startTime);
-    if (nextStartSec !== null) {
-      parts[i].endTime = formatTime(nextStartSec - 1);
-    }
-  }
-
   return parts;
 }
 
