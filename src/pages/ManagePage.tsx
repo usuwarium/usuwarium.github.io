@@ -67,6 +67,9 @@ function parseTextToSingingParts(text: string, songs: Song[]): SingingPartInput[
     const existingSong = songs.find((song) => song.title === title);
     if (existingSong) {
       artist = existingSong.artist;
+    } else {
+      // 既存データから見つからない場合は、アーティスト名を（）で囲む
+      artist = `(${artist})`;
     }
 
     const startTime = formatTime(startTimeSec);
