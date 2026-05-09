@@ -1,3 +1,6 @@
+packages:
+  - "collector"
+  - "gas"
 allowBuilds:
   core-js: true
   esbuild: true
