@@ -13,7 +13,7 @@ import {
   YOUTUBE_API_KEY,
   type SingingPart,
 } from "@/lib/manage";
-import type { Video, VideoId } from "@/lib/types";
+import type { Video, VideoId, Song } from "@/lib/types";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCheck, FaCheckCircle, FaLightbulb, FaPlus, FaSave, FaTrash } from "react-icons/fa";
@@ -42,6 +42,55 @@ function parseTimeString(timeStr: string): number | null {
   return null;
 }
 
+function parseTextToSingingParts(text: string, songs: Song[]): SingingPartInput[] {
+  const lines = text.split("\n").filter((line) => line.trim());
+  const parts: SingingPartInput[] = [];
+
+  for (const line of lines) {
+    // \/ を一時的に置き換え
+    const escaped = line.replace(/\\\//g, "ESCAPED_SLASH");
+    const parts_split = escaped.split("/");
+    if (parts_split.length < 3) continue;
+
+    const timeStr = parts_split[0].trim();
+    const title = parts_split[1].replace(/ESCAPED_SLASH/g, "/").trim();
+    let artist = parts_split
+      .slice(2)
+      .join("/")
+      .replace(/ESCAPED_SLASH/g, "/")
+      .trim();
+
+    const startTimeSec = parseTimeString(timeStr);
+    if (startTimeSec === null) continue;
+
+    // タイトルから既存のアーティストを検索
+    const existingSong = songs.find((song) => song.title === title);
+    if (existingSong) {
+      artist = existingSong.artist;
+    }
+
+    const startTime = formatTime(startTimeSec);
+
+    parts.push({
+      id: crypto.randomUUID(),
+      startTime,
+      endTime: "",
+      title,
+      artist,
+    });
+  }
+
+  // endTimeを設定: 次のパートのstartTime - 1秒
+  for (let i = 0; i < parts.length - 1; i++) {
+    const nextStartSec = parseTimeString(parts[i + 1].startTime);
+    if (nextStartSec !== null) {
+      parts[i].endTime = formatTime(nextStartSec - 1);
+    }
+  }
+
+  return parts;
+}
+
 export function ManagePage() {
   const [videoInput, setVideoInput] = useState("");
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -52,6 +101,8 @@ export function ManagePage() {
   const [completedVideoIds, setCompletedVideoIds] = useState<Set<VideoId>>(new Set());
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNonSinging, setShowNonSinging] = useState(false);
+  const [isTextImportModalOpen, setIsTextImportModalOpen] = useState(false);
+  const [textImportInput, setTextImportInput] = useState("");
 
   const videoPlayerRef = useRef<ManageVideoPlayerRef>(null);
 
@@ -418,6 +469,14 @@ export function ManagePage() {
     }
   };
 
+  const handleTextImport = () => {
+    const newParts = parseTextToSingingParts(textImportInput, songs);
+    setSingingParts((prev) => [...prev, ...newParts]);
+    setIsTextImportModalOpen(false);
+    setTextImportInput("");
+    toast.success(`${newParts.length}件の歌唱パートを追加しました`);
+  };
+
   const handleSetSingingFalse = async (videoId: string) => {
     if (
       !confirm(
@@ -647,6 +706,13 @@ export function ManagePage() {
                       <FaPlus /> 追加
                     </button>
                     <button
+                      onClick={() => setIsTextImportModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded transition"
+                      title="テキストから歌唱パートをインポート"
+                    >
+                      テキストから取得
+                    </button>
+                    <button
                       onClick={handleRefetchSingingParts}
                       className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded transition"
                       title="YouTube動画の概要欄（チャプター）からタイムスタンプを再取得"
@@ -813,6 +879,50 @@ export function ManagePage() {
           </>
         )}
       </main>
+
+      {/* テキストから取得モーダル */}
+      {isTextImportModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsTextImportModalOpen(false)}
+        >
+          <div
+            className="bg-gray-800 p-6 rounded-lg max-w-lg w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">テキストから取得</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              以下のフォーマットで歌唱パートを入力してください：
+              <br />
+              <code>hh:mm:ss/曲タイトル/アーティスト</code> または{" "}
+              <code>mm:ss/曲タイトル/アーティスト</code>
+              <br />
+              複数行入力可能。/ を含める場合は \/ でエスケープ。
+            </p>
+            <textarea
+              value={textImportInput}
+              onChange={(e) => setTextImportInput(e.target.value)}
+              placeholder={`00:00:30/曲タイトル/アーティスト\n00:05:00/次の曲/次のアーティスト`}
+              className="w-full h-48 p-3 bg-gray-700 rounded text-sm font-mono"
+              autoFocus
+            />
+            <div className="flex gap-2 mt-4 justify-end">
+              <button
+                onClick={() => setIsTextImportModalOpen(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleTextImport}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded transition"
+              >
+                取得
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
