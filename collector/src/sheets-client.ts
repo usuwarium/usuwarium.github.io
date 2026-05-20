@@ -65,7 +65,10 @@ export class SheetsClient {
           obj[header] = [];
         }
       } else if (
-        (header === "completed" || header === "singing" || header === "shorts" || header === "available") &&
+        (header === "completed" ||
+          header === "singing" ||
+          header === "shorts" ||
+          header === "available") &&
         typeof value === "string"
       ) {
         obj[header] = value.toLowerCase() === "true";
@@ -79,6 +82,51 @@ export class SheetsClient {
       }
     });
     return obj;
+  }
+
+  private async getSheetProperties(
+    sheetName: string,
+  ): Promise<{ sheetId: number; rowCount: number }> {
+    const response = await this.sheets.spreadsheets.get({
+      spreadsheetId: this.spreadsheetId,
+      includeGridData: false,
+      fields: "sheets.properties(sheetId,title,gridProperties(rowCount))",
+    });
+
+    const sheet = response.data.sheets?.find((sheet) => sheet.properties?.title === sheetName);
+    if (
+      typeof sheet?.properties?.sheetId !== "number" ||
+      typeof sheet?.properties?.gridProperties?.rowCount !== "number"
+    ) {
+      throw new Error(`シート情報の取得に失敗しました: ${sheetName}`);
+    }
+
+    return {
+      sheetId: sheet.properties.sheetId,
+      rowCount: sheet.properties.gridProperties.rowCount as number,
+    };
+  }
+
+  private async ensureRowCapacity(sheetName: string, requiredRowCount: number): Promise<void> {
+    const { sheetId, rowCount } = await this.getSheetProperties(sheetName);
+    if (requiredRowCount <= rowCount) {
+      return;
+    }
+
+    await this.sheets.spreadsheets.batchUpdate({
+      spreadsheetId: this.spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            appendDimension: {
+              sheetId,
+              dimension: "ROWS",
+              length: requiredRowCount - rowCount,
+            },
+          },
+        ],
+      },
+    });
   }
 
   /**
@@ -159,6 +207,7 @@ export class SheetsClient {
     // 新規データを追加
     if (additions.length > 0) {
       const addRows = additions.map((video) => this.objectToRow(headers, video));
+      await this.ensureRowCapacity(this.VIDEOS_SHEET_NAME, data.length + additions.length);
       batchUpdateData.push({
         range: `${this.VIDEOS_SHEET_NAME}!A${data.length + 1}`,
         values: addRows,
