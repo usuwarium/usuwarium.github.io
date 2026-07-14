@@ -31,8 +31,6 @@ jobs:
           node-version: "25.6.0"
 
       - uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # @v6.0.4
-        with:
-          version: 11
 
       - name: Install dependencies
         run: pnpm i
