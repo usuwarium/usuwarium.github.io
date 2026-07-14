@@ -4,6 +4,7 @@
   "description": "YouTubeチャンネル情報を収集・分析するツール",
   "type": "module",
   "main": "dist/index.js",
+  "packageManager": "pnpm@11.0.9",
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
